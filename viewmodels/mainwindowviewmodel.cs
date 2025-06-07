@@ -44,20 +44,10 @@ namespace linuxblox.viewmodels
             PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands);
             SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands);
 
-            var initStarting = InitializeCommand.IsExecuting
-                .Where(isExecuting => isExecuting)
-                .Select(_ => "Initializing...");
-
-            var saveStarting = SaveFlagsCommand.IsExecuting
-                .Where(isExecuting => isExecuting)
-                .Select(_ => "Saving...");
-            
-            var playStarting = PlayCommand.IsExecuting
-                .Where(isExecuting => isExecuting)
-                .Select(_ => "Launching Roblox via Sober...");
-
-            var saveCompleted = SaveFlagsCommand
-                .Select(_ => "Flags saved successfully to Sober config!");
+            var initStarting = InitializeCommand.IsExecuting.Where(isExecuting => isExecuting).Select(_ => "Initializing...");
+            var saveStarting = SaveFlagsCommand.IsExecuting.Where(isExecuting => isExecuting).Select(_ => "Saving...");
+            var playStarting = PlayCommand.IsExecuting.Where(isExecuting => isExecuting).Select(_ => "Launching Roblox via Sober...");
+            var saveCompleted = SaveFlagsCommand.Select(_ => "Flags saved successfully to Sober config!");
 
             var errorMessages = Observable.Merge(
                 InitializeCommand.ThrownExceptions,
@@ -66,15 +56,11 @@ namespace linuxblox.viewmodels
                 .Select(ex => $"Error: {ex.Message}");
 
             _statusMessage = Observable.Merge(
-                    initStarting,
-                    InitializeCommand,
-                    saveStarting,
-                    playStarting,
-                    saveCompleted,
-                    errorMessages)
+                    initStarting, InitializeCommand, saveStarting,
+                    playStarting, saveCompleted, errorMessages)
                 .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
 
-            InitializeCommand.Execute().Subscribe();
+            InitializeCommand.Execute();
         }
 
         private void PopulateDefaultFlags()
@@ -95,7 +81,7 @@ namespace linuxblox.viewmodels
 
             if (!File.Exists(_soberConfigPath))
             {
-                return "Sober config not found. You can still save changes to create it.";
+                return "Sober config not found. You can save changes to create it.";
             }
 
             try
@@ -112,10 +98,10 @@ namespace linuxblox.viewmodels
                 {
                     foreach (var flag in Flags)
                     {
-                        if (fflags.TryGetValue(flag.Name, out var flagNode) && flagNode is not null)
+                        if (fflags.ContainsKey(flag.Name) && fflags[flag.Name] is { } flagNode)
                         {
                             flag.IsEnabled = true;
-                            string value = flagNode.ToString();
+                            string value = flagNode.GetValue<JsonElement>().ToString();
 
                             if (flag is ToggleFlagViewModel toggleFlag)
                             {
@@ -194,7 +180,7 @@ namespace linuxblox.viewmodels
                 Directory.CreateDirectory(configDir);
             }
 
-            var options = new JsonSerializerOptions { WriteIndented = true, };
+            var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
         }
     }
