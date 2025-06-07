@@ -1,16 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="linuxblox.App"
-             xmlns:vm="using:linuxblox.ViewModels"
-             xmlns:v="using:linuxblox.Views"
-             RequestedThemeVariant="Default">
-
-    <Application.DataTemplates>
-        <DataTemplate DataType="{x:Type vm:MainViewModel}">
-            <v:MainView/>
-        </DataTemplate>
-    </Application.DataTemplates>
-
+             RequestedThemeVariant="Dark">
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
