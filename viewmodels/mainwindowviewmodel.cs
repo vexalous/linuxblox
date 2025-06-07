@@ -1,55 +1,80 @@
-using Avalonia.Threading;
-using linuxblox.core;
 using ReactiveUI;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace linuxblox.viewmodels
 {
     public class MainWindowViewModel : ReactiveObject
     {
-        private string _statusMessage = "Initializing...";
-        public string StatusMessage { get => _statusMessage; set => this.RaiseAndSetIfChanged(ref _statusMessage, value); }
+        private readonly ObservableAsPropertyHelper<string> _statusMessage;
+        public string StatusMessage => _statusMessage.Value;
 
-        public string ConfigFilePathText => $"Sober Config File: {_soberConfigPath}";
+        private readonly string? _soberConfigPath;
+        public string ConfigFilePathText => $"Sober Config File: {_soberConfigPath ?? "Path not found"}";
 
-        private bool _isPlayButtonEnabled;
-        public bool IsPlayButtonEnabled { get => _isPlayButtonEnabled; set => this.RaiseAndSetIfChanged(ref _isPlayButtonEnabled, value); }
-        
-        private bool _isSaveButtonEnabled;
-        public bool IsSaveButtonEnabled { get => _isSaveButtonEnabled; set => this.RaiseAndSetIfChanged(ref _isSaveButtonEnabled, value); }
+        public ObservableCollection<FlagViewModel> Flags { get; } = new();
 
-        public ObservableCollection<FlagViewModel> Flags { get; }
-        public ICommand PlayCommand { get; }
-        public ICommand SaveFlagsCommand { get; }
-
-        private readonly string _soberConfigPath;
+        public ReactiveCommand<Unit, string> InitializeCommand { get; }
+        public ReactiveCommand<Unit, Unit> PlayCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveFlagsCommand { get; }
 
         public MainWindowViewModel()
         {
-            Flags = new ObservableCollection<FlagViewModel>();
+            string? homeDir = Environment.GetEnvironmentVariable("HOME");
+            if (!string.IsNullOrEmpty(homeDir))
+            {
+                _soberConfigPath = Path.Combine(homeDir, ".var", "app", "org.vinegarhq.Sober", "config", "sober", "config.json");
+            }
             
-            string homeDir = Environment.GetEnvironmentVariable("HOME")!;
-            _soberConfigPath = Path.Combine(homeDir, ".var", "app", "org.vinegarhq.Sober", "config", "sober", "config.json");
-
-            PlayCommand = new DelegateCommand(PlayRoblox);
-            SaveFlagsCommand = new DelegateCommand(SaveChanges);
-            
-            Initialize();
-        }
-
-        private void Initialize()
-        {
             PopulateDefaultFlags();
-            LoadSettingsFromFile();
+            
+            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync);
+
+            var canExecuteMainCommands = this.WhenAnyObservable(x => x.InitializeCommand.IsExecuting)
+                                             .Select(isInitializing => !isInitializing && !string.IsNullOrEmpty(_soberConfigPath));
+
+            PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands);
+            SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands);
+
+            var initStarting = InitializeCommand.IsExecuting
+                .Where(isExecuting => isExecuting)
+                .Select(_ => "Initializing...");
+
+            var saveStarting = SaveFlagsCommand.IsExecuting
+                .Where(isExecuting => isExecuting)
+                .Select(_ => "Saving...");
+            
+            var playStarting = PlayCommand.IsExecuting
+                .Where(isExecuting => isExecuting)
+                .Select(_ => "Launching Roblox via Sober...");
+
+            var saveCompleted = SaveFlagsCommand
+                .Select(_ => "Flags saved successfully to Sober config!");
+
+            var errorMessages = Observable.Merge(
+                InitializeCommand.ThrownExceptions,
+                SaveFlagsCommand.ThrownExceptions,
+                PlayCommand.ThrownExceptions)
+                .Select(ex => $"Error: {ex.Message}");
+
+            _statusMessage = Observable.Merge(
+                    initStarting,
+                    InitializeCommand,
+                    saveStarting,
+                    playStarting,
+                    saveCompleted,
+                    errorMessages)
+                .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
+
+            InitializeCommand.Execute().Subscribe();
         }
 
         private void PopulateDefaultFlags()
@@ -58,103 +83,119 @@ namespace linuxblox.viewmodels
             Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", Value = "120" });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsPreferVulkan", Description = "Prefer Vulkan Renderer", IsOn = true });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
-            Flags.Add(new InputFlagViewModel {Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4"});
+            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
         }
 
-        private void LoadSettingsFromFile()
+        private async Task<string> LoadSettingsFromFileAsync()
         {
-            Task.Run(() =>
+            if (string.IsNullOrEmpty(_soberConfigPath))
             {
-                if (!File.Exists(_soberConfigPath))
+                return "Could not determine HOME directory. Cannot find Sober config.";
+            }
+
+            if (!File.Exists(_soberConfigPath))
+            {
+                return "Sober config not found. You can still save changes to create it.";
+            }
+
+            try
+            {
+                string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
+                if (string.IsNullOrWhiteSpace(jsonString))
                 {
-                    Dispatcher.UIThread.Post(() => {
-                        StatusMessage = "Sober config not found. Please run Sober once to create it.";
-                        IsPlayButtonEnabled = true;
-                        IsSaveButtonEnabled = false;
-                    });
-                    return;
+                    return "Sober config is empty. Ready to save new settings.";
                 }
-                
-                Dispatcher.UIThread.Post(() => {
-                    StatusMessage = "Sober config file found! Ready.";
-                    IsPlayButtonEnabled = true;
-                    IsSaveButtonEnabled = true;
-                });
 
-                try
+                JsonNode? configNode = JsonNode.Parse(jsonString);
+
+                if (configNode?["FFlags"] is JsonObject fflags)
                 {
-                    var jsonString = File.ReadAllText(_soberConfigPath);
-                    var configNode = JsonNode.Parse(jsonString);
-                    if (configNode?["FFlags"] is not JsonObject fflags)
+                    foreach (var flag in Flags)
                     {
-                        return;
-                    }
-
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        foreach (var flag in Flags)
+                        if (fflags.TryGetValue(flag.Name, out var flagNode) && flagNode is not null)
                         {
-                            if (fflags.ContainsKey(flag.Name) && fflags[flag.Name] != null)
+                            flag.IsEnabled = true;
+                            string value = flagNode.ToString();
+
+                            if (flag is ToggleFlagViewModel toggleFlag)
                             {
-                                flag.IsEnabled = true;
-                                var value = fflags[flag.Name]!.ToString();
-                                
-                                if (flag is ToggleFlagViewModel toggleFlag) { toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase); }
-                                else if (flag is InputFlagViewModel inputFlag) { inputFlag.Value = value; }
+                                toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
+                            }
+                            else if (flag is InputFlagViewModel inputFlag)
+                            {
+                                inputFlag.Value = value;
                             }
                         }
-                    });
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Dispatcher.UIThread.Post(() => StatusMessage = $"Error reading Sober config: {ex.Message}");
-                }
-            });
+                return "Sober config file loaded! Ready.";
+            }
+            catch (JsonException ex)
+            {
+                return $"Sober config is corrupt. You can save to overwrite it. Error: {ex.Message}";
+            }
         }
         
         private void PlayRoblox()
         {
-            StatusMessage = "Launching Roblox via Sober...";
-            try { Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false }); }
-            catch (Exception ex) { StatusMessage = $"Launch failed. Is the Sober Flatpak installed correctly? Error: {ex.Message}"; }
+            Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false });
         }
         
-        private void SaveChanges()
+        private async Task SaveChangesAsync()
         {
-            try
+            if (string.IsNullOrEmpty(_soberConfigPath))
             {
-                var jsonString = File.Exists(_soberConfigPath) ? File.ReadAllText(_soberConfigPath) : "{}";
-                var configNode = JsonNode.Parse(jsonString) ?? new JsonObject();
-                
-                if (configNode["FFlags"] is not JsonObject fflags)
-                {
-                    fflags = new JsonObject();
-                    configNode["FFlags"] = fflags;
-                }
-                
-                foreach (var flag in Flags)
-                {
-                    if (flag.IsEnabled)
-                    {
-                        if (flag is ToggleFlagViewModel toggle) fflags[flag.Name] = JsonValue.Create(toggle.IsOn);
-                        else if (flag is InputFlagViewModel input) fflags[flag.Name] = JsonValue.Create(input.Value);
-                    }
-                    else
-                    {
-                        fflags.Remove(flag.Name);
-                    }
-                }
-
-                var configDir = Path.GetDirectoryName(_soberConfigPath);
-                if (!string.IsNullOrEmpty(configDir)) Directory.CreateDirectory(configDir);
-
-                File.WriteAllText(_soberConfigPath, configNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-                StatusMessage = "Flags saved successfully to Sober config!";
+                throw new InvalidOperationException("Cannot save: Sober config path is not set.");
             }
-            catch (Exception ex)
+
+            JsonNode configNode;
+            if (File.Exists(_soberConfigPath))
             {
-                StatusMessage = $"Error saving flags: {ex.Message}";
+                var existingJson = await File.ReadAllTextAsync(_soberConfigPath);
+                configNode = string.IsNullOrWhiteSpace(existingJson) 
+                    ? new JsonObject() 
+                    : JsonNode.Parse(existingJson) ?? new JsonObject();
             }
+            else
+            {
+                configNode = new JsonObject();
+            }
+            
+            if (configNode["FFlags"] is not JsonObject fflags)
+            {
+                fflags = new JsonObject();
+                configNode["FFlags"] = fflags;
+            }
+            
+            foreach (var flag in Flags)
+            {
+                if (flag.IsEnabled)
+                {
+                    if (flag is ToggleFlagViewModel toggle)
+                    {
+                        fflags[flag.Name] = toggle.IsOn;
+                    }
+                    else if (flag is InputFlagViewModel input)
+                    {
+                        fflags[flag.Name] = int.TryParse(input.Value, out int intValue)
+                            ? JsonValue.Create(intValue)
+                            : JsonValue.Create(input.Value);
+                    }
+                }
+                else
+                {
+                    fflags.Remove(flag.Name);
+                }
+            }
+
+            var configDir = Path.GetDirectoryName(_soberConfigPath);
+            if (!string.IsNullOrEmpty(configDir))
+            {
+                Directory.CreateDirectory(configDir);
+            }
+
+            var options = new JsonSerializerOptions { WriteIndented = true, };
+            await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
         }
     }
 }
