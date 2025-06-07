@@ -37,10 +37,12 @@ namespace linuxblox.viewmodels
             
             PopulateDefaultFlags();
             
-            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync);
+            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, scheduler: RxApp.TaskpoolScheduler);
 
             var canExecuteMainCommands = this.WhenAnyObservable(x => x.InitializeCommand.IsExecuting)
                                              .Select(isInitializing => !isInitializing && !string.IsNullOrEmpty(_soberConfigPath))
+                                             .StartWith(false)
+                                             .DistinctUntilChanged()
                                              .ObserveOn(RxApp.MainThreadScheduler);
 
             PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands);
@@ -69,7 +71,7 @@ namespace linuxblox.viewmodels
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
 
-            InitializeCommand.Execute();
+            InitializeCommand.Execute().Subscribe();
         }
 
         private void PopulateDefaultFlags()
