@@ -116,12 +116,12 @@ namespace linuxblox.viewmodels
 
             try
             {
+                // Ensure the file is writable before we read it, in case it was left read-only.
                 File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
                 JsonNode? configNode = JsonNode.Parse(jsonString);
-                // Read from the correct lowercase "fflags" section.
                 if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no 'fflags' section found.";
 
                 var loadedFlagsData = fflags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
@@ -157,6 +157,7 @@ namespace linuxblox.viewmodels
             if (!File.Exists(_soberConfigPath)) return new JsonObject();
             try
             {
+                // Ensure the file is writable before we access it.
                 File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 var json = await File.ReadAllTextAsync(_soberConfigPath);
                 return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
@@ -170,13 +171,13 @@ namespace linuxblox.viewmodels
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            // --- FIX 1: Actively remove the invalid uppercase "FFlags" section to clean the file. ---
+            // Your own logic for handling the flags, which you pulled from git.
+            // This ensures we only interact with the correct 'fflags' section.
             if (configNode is JsonObject obj)
             {
                 obj.Remove("FFlags");
             }
             
-            // Get or create the correct lowercase "fflags" section.
             if (configNode["fflags"] is not JsonObject fflags)
             {
                 fflags = new JsonObject();
@@ -185,7 +186,6 @@ namespace linuxblox.viewmodels
 
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
-                // Save all values as strings, as Sober likely expects them in this format.
                 if (flag is ToggleFlagViewModel toggle)
                     fflags[flag.Name] = toggle.IsOn.ToString().ToLower();
                 else if (flag is InputFlagViewModel input)
@@ -203,8 +203,8 @@ namespace linuxblox.viewmodels
             var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
             
-            // Defensively set the file to read-only to prevent Sober from overwriting our changes.
-            File.SetAttributes(_soberConfigPath, FileAttributes.ReadOnly);
+            // REMOVED: The line that set the file to read-only, which caused the crash.
+            // File.SetAttributes(_soberConfigPath, FileAttributes.ReadOnly);
         }
     }
 }
