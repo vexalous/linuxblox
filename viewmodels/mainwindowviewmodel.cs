@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,6 +18,12 @@ namespace linuxblox.viewmodels
 {
     public class MainWindowViewModel : ReactiveObject
     {
+        // --- REFACTORED STATE MANAGEMENT ---
+        // This property will hold the result of the initialization.
+        // It's a more robust way to track whether the initial load is complete.
+        [ObservableAsProperty]
+        public bool IsInitialized { get; }
+
         private readonly ObservableAsPropertyHelper<string> _statusMessage;
         public string StatusMessage => _statusMessage.Value;
 
@@ -39,15 +46,23 @@ namespace linuxblox.viewmodels
 
             PopulateDefaultFlags();
 
-            // --- THE PRIMARY FIX IS HERE ---
-            // By setting the outputScheduler, we ensure the command's state changes (like IsExecuting)
-            // are published on the UI thread, preventing cross-thread exceptions downstream.
+            // By setting the outputScheduler, we ensure the command's results and state changes
+            // are published on the UI thread, which is critical for safety.
             InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: RxApp.MainThreadScheduler);
 
-            var canExecuteMainCommands = this.WhenAnyObservable(x => x.InitializeCommand.IsExecuting)
-                                             .Select(isInitializing => !isInitializing && !string.IsNullOrEmpty(_soberConfigPath))
-                                             .StartWith(false)
-                                             .DistinctUntilChanged()
+            // --- REFACTORED STATE MANAGEMENT ---
+            // Drive the IsInitialized property from the result of the InitializeCommand.
+            // It starts as `false` and becomes `true` when the command completes.
+            InitializeCommand.Select(_ => true)
+                             .StartWith(false)
+                             .DistinctUntilChanged()
+                             .ToPropertyEx(this, x => x.IsInitialized);
+            
+            // --- REFACTORED canExecute LOGIC ---
+            // The canExecute logic now cleanly observes the IsInitialized property.
+            // This is safer than observing the command's IsExecuting state directly.
+            var canExecuteMainCommands = this.WhenAnyValue(x => x.IsInitialized)
+                                             .Select(isInitialized => isInitialized && !string.IsNullOrEmpty(_soberConfigPath))
                                              .ObserveOn(RxApp.MainThreadScheduler);
 
             PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands);
@@ -122,13 +137,9 @@ namespace linuxblox.viewmodels
                         {
                             flag.IsEnabled = true;
                             if (flag is ToggleFlagViewModel toggleFlag)
-                            {
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
-                            }
                             else if (flag is InputFlagViewModel inputFlag)
-                            {
                                 inputFlag.Value = value;
-                            }
                         }
                         else
                         {
