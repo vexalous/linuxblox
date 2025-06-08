@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
-using System.Reactive.Disposables; // Required for .DisposeWith()
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -16,10 +16,8 @@ using System.Threading.Tasks;
 
 namespace linuxblox.viewmodels
 {
-    // 1. Implement IActivatableViewModel
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
-        // 2. Add the ViewModelActivator property
         public ViewModelActivator Activator { get; }
 
         private readonly ObservableAsPropertyHelper<bool> _isInitialized;
@@ -39,7 +37,7 @@ namespace linuxblox.viewmodels
 
         public MainWindowViewModel()
         {
-            Activator = new ViewModelActivator(); // Initialize the activator
+            Activator = new ViewModelActivator();
 
             var homeDir = Environment.GetEnvironmentVariable("HOME");
             if (!string.IsNullOrEmpty(homeDir))
@@ -60,24 +58,25 @@ namespace linuxblox.viewmodels
                                              .Select(isInitialized => isInitialized && !string.IsNullOrEmpty(_soberConfigPath))
                                              .ObserveOn(RxApp.MainThreadScheduler);
 
-            PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands);
-            SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands);
+            // --- THE FINAL FIX ---
+            // We are now explicitly telling these commands to schedule their internal state changes
+            // (including raising the CanExecuteChanged event) on the main thread.
+            // This is our last line of defense against the threading issue.
+            PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands, outputScheduler: RxApp.MainThreadScheduler);
+            SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands, outputScheduler: RxApp.MainThreadScheduler);
 
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
 
-            // 3. Move the command execution to a WhenActivated block
             this.WhenActivated(disposables =>
             {
-                // This code runs when the View is activated.
-                // By this time, the UI thread scheduler is guaranteed to be ready.
                 InitializeCommand.Execute()
                                  .Subscribe()
-                                 .DisposeWith(disposables); // Auto-dispose the subscription on deactivation
+                                 .DisposeWith(disposables);
             });
         }
         
-        // --- Rest of the file is unchanged ---
+        // --- The rest of the file is unchanged. ---
         private static IObservable<string> CreateStatusMessageObservable(
                     ReactiveCommand<Unit, string> initialize,
                     ReactiveCommand<Unit, Unit> save,
