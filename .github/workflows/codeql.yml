@@ -1,12 +1,9 @@
-name: "CodeQL"
-
+name: Analyze
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: '0 0 * * *'
+    branches: [ main ]
 
 jobs:
   analyze:
@@ -21,6 +18,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 'latest'
+
+    - name: Restore .NET dependencies
+      run: dotnet restore
+
+    - name: Build .NET project
+      run: dotnet build --no-restore --configuration Release
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
