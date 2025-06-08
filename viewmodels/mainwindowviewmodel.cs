@@ -1,6 +1,5 @@
 using Avalonia.Threading;
 using ReactiveUI;
-// Removed: using ReactiveUI.Fody.Helpers; // No longer needed
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables; // Required for .DisposeWith()
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -16,11 +16,12 @@ using System.Threading.Tasks;
 
 namespace linuxblox.viewmodels
 {
-    public class MainWindowViewModel : ReactiveObject
+    // 1. Implement IActivatableViewModel
+    public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
-        // --- REVERTED TO MANUAL PROPERTY HELPER ---
-        // This is the classic, explicit way to create a property from an observable.
-        // It does not require the ReactiveUI.Fody package.
+        // 2. Add the ViewModelActivator property
+        public ViewModelActivator Activator { get; }
+
         private readonly ObservableAsPropertyHelper<bool> _isInitialized;
         public bool IsInitialized => _isInitialized.Value;
 
@@ -38,6 +39,8 @@ namespace linuxblox.viewmodels
 
         public MainWindowViewModel()
         {
+            Activator = new ViewModelActivator(); // Initialize the activator
+
             var homeDir = Environment.GetEnvironmentVariable("HOME");
             if (!string.IsNullOrEmpty(homeDir))
             {
@@ -48,8 +51,6 @@ namespace linuxblox.viewmodels
 
             InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: RxApp.MainThreadScheduler);
 
-            // --- REVERTED TO ToProperty() ---
-            // Drive the IsInitialized property using the standard ToProperty method.
             _isInitialized = InitializeCommand.Select(_ => true)
                                               .StartWith(false)
                                               .DistinctUntilChanged()
@@ -65,15 +66,22 @@ namespace linuxblox.viewmodels
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
 
-            InitializeCommand.Execute().Subscribe();
+            // 3. Move the command execution to a WhenActivated block
+            this.WhenActivated(disposables =>
+            {
+                // This code runs when the View is activated.
+                // By this time, the UI thread scheduler is guaranteed to be ready.
+                InitializeCommand.Execute()
+                                 .Subscribe()
+                                 .DisposeWith(disposables); // Auto-dispose the subscription on deactivation
+            });
         }
-
-        // ... the rest of your file is unchanged ...
-
+        
+        // --- Rest of the file is unchanged ---
         private static IObservable<string> CreateStatusMessageObservable(
-            ReactiveCommand<Unit, string> initialize,
-            ReactiveCommand<Unit, Unit> save,
-            ReactiveCommand<Unit, Unit> play)
+                    ReactiveCommand<Unit, string> initialize,
+                    ReactiveCommand<Unit, Unit> save,
+                    ReactiveCommand<Unit, Unit> play)
         {
             var execution = Observable.Merge(
                 initialize.IsExecuting.Where(isExecuting => isExecuting).Select(_ => "Initializing..."),
