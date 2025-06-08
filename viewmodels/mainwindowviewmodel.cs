@@ -121,8 +121,8 @@ namespace linuxblox.viewmodels
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
                 JsonNode? configNode = JsonNode.Parse(jsonString);
-                // **CONFIRMED FIX**: Using lowercase "fflags"
-                if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no flags are present.";
+                // Read from the correct lowercase "fflags" section.
+                if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no 'fflags' section found.";
 
                 var loadedFlagsData = fflags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
 
@@ -170,7 +170,13 @@ namespace linuxblox.viewmodels
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            // **CONFIRMED FIX**: Using lowercase "fflags"
+            // --- FIX 1: Actively remove the invalid uppercase "FFlags" section to clean the file. ---
+            if (configNode is JsonObject obj)
+            {
+                obj.Remove("FFlags");
+            }
+            
+            // Get or create the correct lowercase "fflags" section.
             if (configNode["fflags"] is not JsonObject fflags)
             {
                 fflags = new JsonObject();
@@ -179,7 +185,7 @@ namespace linuxblox.viewmodels
 
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
-                // **CONFIRMED FIX**: Save all values as strings
+                // Save all values as strings, as Sober likely expects them in this format.
                 if (flag is ToggleFlagViewModel toggle)
                     fflags[flag.Name] = toggle.IsOn.ToString().ToLower();
                 else if (flag is InputFlagViewModel input)
@@ -197,7 +203,7 @@ namespace linuxblox.viewmodels
             var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
             
-            // Defensive measure to prevent overwrites
+            // Defensively set the file to read-only to prevent Sober from overwriting our changes.
             File.SetAttributes(_soberConfigPath, FileAttributes.ReadOnly);
         }
     }
