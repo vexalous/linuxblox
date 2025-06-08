@@ -109,15 +109,20 @@ namespace linuxblox.viewmodels
 
                 foreach (var flag in Flags)
                 {
-                    if (fflags.TryGetValue(flag.Name, out var flagNode) && flagNode is not null)
+                    // THE FIX: Replaced TryGetValue with ContainsKey and the indexer
+                    if (fflags.ContainsKey(flag.Name))
                     {
-                        flag.IsEnabled = true;
-                        string value = flagNode.ToString();
+                        var flagNode = fflags[flag.Name];
+                        if (flagNode is not null)
+                        {
+                            flag.IsEnabled = true;
+                            string value = flagNode.ToString();
 
-                        if (flag is ToggleFlagViewModel toggleFlag)
-                            toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
-                        else if (flag is InputFlagViewModel inputFlag)
-                            inputFlag.Value = value;
+                            if (flag is ToggleFlagViewModel toggleFlag)
+                                toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
+                            else if (flag is InputFlagViewModel inputFlag)
+                                inputFlag.Value = value;
+                        }
                     }
                 }
                 return "Sober config file loaded successfully.";
@@ -134,7 +139,6 @@ namespace linuxblox.viewmodels
             }
             catch (Exception)
             {
-                // Throwing the exception here will allow the command's ThrownExceptions observable to catch it.
                 throw;
             }
         }
