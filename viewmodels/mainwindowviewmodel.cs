@@ -116,7 +116,6 @@ namespace linuxblox.viewmodels
 
             try
             {
-                // Ensure the file is writable before we read it, in case it was left read-only.
                 File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
@@ -157,7 +156,6 @@ namespace linuxblox.viewmodels
             if (!File.Exists(_soberConfigPath)) return new JsonObject();
             try
             {
-                // Ensure the file is writable before we access it.
                 File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 var json = await File.ReadAllTextAsync(_soberConfigPath);
                 return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
@@ -171,8 +169,6 @@ namespace linuxblox.viewmodels
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            // Your own logic for handling the flags, which you pulled from git.
-            // This ensures we only interact with the correct 'fflags' section.
             if (configNode is JsonObject obj)
             {
                 obj.Remove("FFlags");
@@ -202,9 +198,6 @@ namespace linuxblox.viewmodels
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
-            
-            // REMOVED: The line that set the file to read-only, which caused the crash.
-            // File.SetAttributes(_soberConfigPath, FileAttributes.ReadOnly);
         }
     }
 }
