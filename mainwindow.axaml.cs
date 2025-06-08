@@ -1,22 +1,41 @@
-using Avalonia.ReactiveUI;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using linuxblox.viewmodels;
-using ReactiveUI; // <-- THIS IS THE MISSING LINE THAT FIXES THE BUILD ERROR
-using System.Reactive.Disposables;
+using ReactiveUI; // 1. Add these two using statements
+using Splat;
 
 namespace linuxblox;
 
-public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
+public partial class App : Application
 {
-    public MainWindow()
+    public override void Initialize()
     {
-        InitializeComponent();
+        AvaloniaXamlLoader.Load(this);
+    }
 
-        ViewModel = new MainWindowViewModel();
+    public override void OnFrameworkInitializationCompleted()
+    {
+        // 2. Add this line to register the activation helper.
+        // This teaches ReactiveUI how to handle activation for Avalonia views.
+        Locator.CurrentMutable.Register(() => new AvaloniaActivationForViewFetcher(), typeof(IActivationForViewFetcher));
 
-        this.WhenActivated(disposables => 
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // This block's presence is what activates the ViewModel.
-            // It links the View's lifetime to the ViewModel's activation logic.
-        });
+            desktop.MainWindow = new MainWindow
+            {
+                // The DataContext is now set by the ReactiveWindow base class, so we can remove it from here.
+            };
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+        {
+            // This part is for mobile; adjust if needed.
+            singleViewPlatform.MainView = new MainWindow
+            {
+                // The DataContext is now set by the ReactiveWindow base class.
+            };
+        }
+
+        base.OnFrameworkInitializationCompleted();
     }
 }
