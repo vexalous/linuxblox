@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.ReactiveUI; // <-- This is the missing line that fixes the error.
 using linuxblox.viewmodels;
 using ReactiveUI;
 using Splat;
