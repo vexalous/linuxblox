@@ -1,3 +1,5 @@
+name: Analyze
+
 on:
   push:
     branches: [ "main" ]
@@ -22,5 +24,22 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0'
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Restore .NET dependencies
+      run: dotnet restore
+
+    - name: Build .NET project
+      run: dotnet build --no-restore --configuration Release
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
