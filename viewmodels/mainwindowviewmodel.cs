@@ -1,3 +1,4 @@
+using Avalonia.ReactiveUI; // Required for AvaloniaScheduler
 using Avalonia.Threading;
 using ReactiveUI;
 using System;
@@ -47,7 +48,8 @@ namespace linuxblox.viewmodels
 
             PopulateDefaultFlags();
 
-            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: RxApp.MainThreadScheduler);
+            // Use the explicit Avalonia scheduler instead of the global one.
+            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: AvaloniaScheduler.Instance);
 
             _isInitialized = InitializeCommand.Select(_ => true)
                                               .StartWith(false)
@@ -56,14 +58,10 @@ namespace linuxblox.viewmodels
 
             var canExecuteMainCommands = this.WhenAnyValue(x => x.IsInitialized)
                                              .Select(isInitialized => isInitialized && !string.IsNullOrEmpty(_soberConfigPath))
-                                             .ObserveOn(RxApp.MainThreadScheduler);
+                                             .ObserveOn(AvaloniaScheduler.Instance);
 
-            // --- THE FINAL FIX ---
-            // We are now explicitly telling these commands to schedule their internal state changes
-            // (including raising the CanExecuteChanged event) on the main thread.
-            // This is our last line of defense against the threading issue.
-            PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands, outputScheduler: RxApp.MainThreadScheduler);
-            SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands, outputScheduler: RxApp.MainThreadScheduler);
+            PlayCommand = ReactiveCommand.Create(PlayRoblox, canExecuteMainCommands, outputScheduler: AvaloniaScheduler.Instance);
+            SaveFlagsCommand = ReactiveCommand.CreateFromTask(SaveChangesAsync, canExecuteMainCommands, outputScheduler: AvaloniaScheduler.Instance);
 
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
@@ -76,7 +74,6 @@ namespace linuxblox.viewmodels
             });
         }
         
-        // --- The rest of the file is unchanged. ---
         private static IObservable<string> CreateStatusMessageObservable(
                     ReactiveCommand<Unit, string> initialize,
                     ReactiveCommand<Unit, Unit> save,
@@ -101,7 +98,8 @@ namespace linuxblox.viewmodels
                     ? $"Launch failed. Is 'flatpak' installed & Sober available? Error: {ex.Message}"
                     : $"Error: {ex.Message}");
 
-            return Observable.Merge(execution, results, errors).ObserveOn(RxApp.MainThreadScheduler);
+            // Also use the explicit scheduler here for maximum safety.
+            return Observable.Merge(execution, results, errors).ObserveOn(AvaloniaScheduler.Instance);
         }
 
         private void PopulateDefaultFlags()
