@@ -81,6 +81,7 @@ namespace linuxblox.viewmodels
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsPreferVulkan", Description = "Prefer Vulkan Renderer", IsOn = true });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
             Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID. If the user is a member of this group, enables: Ctrl+Shift+G (CoreGui), C (DevUI), B (3D GUI), N (Nameplates) to toggle visibility. Set to 0 to disable.", Value = "0" });
         }
 
         private async Task<string> LoadSettingsFromFileAsync()
