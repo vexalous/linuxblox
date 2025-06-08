@@ -1,6 +1,6 @@
 using Avalonia.Threading;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+// Removed: using ReactiveUI.Fody.Helpers; // No longer needed
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -18,11 +18,11 @@ namespace linuxblox.viewmodels
 {
     public class MainWindowViewModel : ReactiveObject
     {
-        // --- REFACTORED STATE MANAGEMENT ---
-        // This property will hold the result of the initialization.
-        // It's a more robust way to track whether the initial load is complete.
-        [ObservableAsProperty]
-        public bool IsInitialized { get; }
+        // --- REVERTED TO MANUAL PROPERTY HELPER ---
+        // This is the classic, explicit way to create a property from an observable.
+        // It does not require the ReactiveUI.Fody package.
+        private readonly ObservableAsPropertyHelper<bool> _isInitialized;
+        public bool IsInitialized => _isInitialized.Value;
 
         private readonly ObservableAsPropertyHelper<string> _statusMessage;
         public string StatusMessage => _statusMessage.Value;
@@ -46,21 +46,15 @@ namespace linuxblox.viewmodels
 
             PopulateDefaultFlags();
 
-            // By setting the outputScheduler, we ensure the command's results and state changes
-            // are published on the UI thread, which is critical for safety.
             InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: RxApp.MainThreadScheduler);
 
-            // --- REFACTORED STATE MANAGEMENT ---
-            // Drive the IsInitialized property from the result of the InitializeCommand.
-            // It starts as `false` and becomes `true` when the command completes.
-            InitializeCommand.Select(_ => true)
-                             .StartWith(false)
-                             .DistinctUntilChanged()
-                             .ToPropertyEx(this, x => x.IsInitialized);
-            
-            // --- REFACTORED canExecute LOGIC ---
-            // The canExecute logic now cleanly observes the IsInitialized property.
-            // This is safer than observing the command's IsExecuting state directly.
+            // --- REVERTED TO ToProperty() ---
+            // Drive the IsInitialized property using the standard ToProperty method.
+            _isInitialized = InitializeCommand.Select(_ => true)
+                                              .StartWith(false)
+                                              .DistinctUntilChanged()
+                                              .ToProperty(this, x => x.IsInitialized);
+
             var canExecuteMainCommands = this.WhenAnyValue(x => x.IsInitialized)
                                              .Select(isInitialized => isInitialized && !string.IsNullOrEmpty(_soberConfigPath))
                                              .ObserveOn(RxApp.MainThreadScheduler);
@@ -73,6 +67,8 @@ namespace linuxblox.viewmodels
 
             InitializeCommand.Execute().Subscribe();
         }
+
+        // ... the rest of your file is unchanged ...
 
         private static IObservable<string> CreateStatusMessageObservable(
             ReactiveCommand<Unit, string> initialize,
