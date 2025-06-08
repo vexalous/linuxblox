@@ -39,7 +39,10 @@ namespace linuxblox.viewmodels
 
             PopulateDefaultFlags();
 
-            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync);
+            // --- THE PRIMARY FIX IS HERE ---
+            // By setting the outputScheduler, we ensure the command's state changes (like IsExecuting)
+            // are published on the UI thread, preventing cross-thread exceptions downstream.
+            InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: RxApp.MainThreadScheduler);
 
             var canExecuteMainCommands = this.WhenAnyObservable(x => x.InitializeCommand.IsExecuting)
                                              .Select(isInitializing => !isInitializing && !string.IsNullOrEmpty(_soberConfigPath))
@@ -93,9 +96,6 @@ namespace linuxblox.viewmodels
             Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", Value = "0" });
         }
 
-        // --- MODIFIED METHOD ---
-        // This method now performs file I/O on a background thread and then safely
-        // dispatches the UI updates to the main thread to prevent cross-thread exceptions.
         private async Task<string> LoadSettingsFromFileAsync()
         {
             if (string.IsNullOrEmpty(_soberConfigPath)) return "Could not determine HOME directory. Cannot find Sober config.";
@@ -103,20 +103,17 @@ namespace linuxblox.viewmodels
 
             try
             {
-                // 1. Do all file I/O and parsing on the background thread.
                 string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty. Ready to save new settings.";
 
                 JsonNode? configNode = JsonNode.Parse(jsonString);
                 if (configNode?["FFlags"] is not JsonObject fflags) return "Sober config loaded, but no flags are present.";
 
-                // 2. Prepare the data in a temporary, non-UI object.
                 var loadedFlagsData = fflags.ToDictionary(
                     kvp => kvp.Key,
                     kvp => kvp.Value?.ToString()
                 );
 
-                // 3. Switch to the UI thread to safely update the UI-bound collection.
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     foreach (var flag in Flags)
@@ -154,7 +151,6 @@ namespace linuxblox.viewmodels
             }
             catch (Exception)
             {
-                // Re-throwing the exception will allow the ReactiveCommand's ThrownExceptions observable to catch it.
                 throw;
             }
         }
@@ -210,15 +206,4 @@ namespace linuxblox.viewmodels
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
         }
     }
-
-    // NOTE: It is assumed FlagViewModel, InputFlagViewModel, and ToggleFlagViewModel
-    // are defined in another file and are also inheriting from ReactiveObject
-    // for bindings to work correctly. For example:
-    //
-    // public abstract class FlagViewModel : ReactiveObject
-    // {
-    //     [Reactive] public bool IsEnabled { get; set; }
-    //     public string Name { get; set; }
-    //     public string Description { get; set; }
-    // }
 }
