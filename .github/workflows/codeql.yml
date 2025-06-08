@@ -1,10 +1,10 @@
-name: Analyze
-
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -22,20 +22,5 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '9.0'
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-
-    - name: Restore .NET dependencies
-      run: dotnet restore
-
-    - name: Build .NET project
-      run: dotnet build --no-restore --configuration Release
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
