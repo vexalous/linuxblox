@@ -1,4 +1,4 @@
-using Avalonia.ReactiveUI; // Required for AvaloniaScheduler
+using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using ReactiveUI;
 using System;
@@ -48,7 +48,6 @@ namespace linuxblox.viewmodels
 
             PopulateDefaultFlags();
 
-            // Use the explicit Avalonia scheduler instead of the global one.
             InitializeCommand = ReactiveCommand.CreateFromTask(LoadSettingsFromFileAsync, outputScheduler: AvaloniaScheduler.Instance);
 
             _isInitialized = InitializeCommand.Select(_ => true)
@@ -98,7 +97,6 @@ namespace linuxblox.viewmodels
                     ? $"Launch failed. Is 'flatpak' installed & Sober available? Error: {ex.Message}"
                     : $"Error: {ex.Message}");
 
-            // Also use the explicit scheduler here for maximum safety.
             return Observable.Merge(execution, results, errors).ObserveOn(AvaloniaScheduler.Instance);
         }
 
@@ -123,7 +121,8 @@ namespace linuxblox.viewmodels
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty. Ready to save new settings.";
 
                 JsonNode? configNode = JsonNode.Parse(jsonString);
-                if (configNode?["FFlags"] is not JsonObject fflags) return "Sober config loaded, but no flags are present.";
+                // --- FIX 1 --- Use lowercase "fflags" to read the correct section.
+                if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no flags are present.";
 
                 var loadedFlagsData = fflags.ToDictionary(
                     kvp => kvp.Key,
@@ -191,10 +190,12 @@ namespace linuxblox.viewmodels
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            if (configNode["FFlags"] is not JsonObject fflags)
+            // --- FIX 2 --- Use lowercase "fflags" to find the existing section.
+            if (configNode["fflags"] is not JsonObject fflags)
             {
                 fflags = new JsonObject();
-                configNode["FFlags"] = fflags;
+                // --- FIX 3 --- Use lowercase "fflags" when creating a new section.
+                configNode["fflags"] = fflags;
             }
 
             foreach (var flag in Flags.Where(f => f.IsEnabled))
