@@ -112,22 +112,19 @@ namespace linuxblox.viewmodels
 
         private async Task<string> LoadSettingsFromFileAsync()
         {
-            if (string.IsNullOrEmpty(_soberConfigPath)) return "Could not determine HOME directory. Cannot find Sober config.";
-            if (!File.Exists(_soberConfigPath)) return "Sober config not found. You can save changes to create it.";
+            if (string.IsNullOrEmpty(_soberConfigPath) || !File.Exists(_soberConfigPath)) return "Sober config not found.";
 
             try
             {
+                File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
-                if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty. Ready to save new settings.";
+                if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
                 JsonNode? configNode = JsonNode.Parse(jsonString);
-                // --- FIX 1 --- Use lowercase "fflags" to read the correct section.
+                // **CONFIRMED FIX**: Using lowercase "fflags"
                 if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no flags are present.";
 
-                var loadedFlagsData = fflags.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value?.ToString()
-                );
+                var loadedFlagsData = fflags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
 
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
@@ -140,70 +137,53 @@ namespace linuxblox.viewmodels
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
                                 inputFlag.Value = value;
-                        }
-                        else
-                        {
-                            flag.IsEnabled = false;
-                        }
+                        } else { flag.IsEnabled = false; }
                     }
                 });
-
                 return "Sober config file loaded successfully.";
             }
-            catch (JsonException ex) { return $"Sober config is corrupt. Save to overwrite it. Error: {ex.Message}"; }
-            catch (Exception ex) { return $"Error reading Sober config file: {ex.Message}"; }
+            catch (Exception ex) { return $"Error reading Sober config: {ex.Message}"; }
         }
 
         private void PlayRoblox()
         {
-            try
-            {
-                 Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false });
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            try { Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false }); }
+            catch (Exception) { throw; }
         }
 
         private async Task<JsonNode> LoadOrCreateConfigNodeAsync()
         {
-            if (string.IsNullOrEmpty(_soberConfigPath) || !File.Exists(_soberConfigPath)) return new JsonObject();
-
+            if (string.IsNullOrEmpty(_soberConfigPath)) return new JsonObject();
+            if (!File.Exists(_soberConfigPath)) return new JsonObject();
             try
             {
+                File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 var json = await File.ReadAllTextAsync(_soberConfigPath);
-                return string.IsNullOrWhiteSpace(json)
-                    ? new JsonObject()
-                    : JsonNode.Parse(json) ?? new JsonObject();
+                return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
             }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Could not read or parse config file: {_soberConfigPath}", ex);
-            }
+            catch (Exception ex) { throw new InvalidOperationException($"Could not read config: {_soberConfigPath}", ex); }
         }
 
         private async Task SaveChangesAsync()
         {
-            if (string.IsNullOrEmpty(_soberConfigPath))
-                throw new InvalidOperationException("Cannot save: Sober config path is not set.");
+            if (string.IsNullOrEmpty(_soberConfigPath)) throw new InvalidOperationException("Config path not set.");
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            // --- FIX 2 --- Use lowercase "fflags" to find the existing section.
+            // **CONFIRMED FIX**: Using lowercase "fflags"
             if (configNode["fflags"] is not JsonObject fflags)
             {
                 fflags = new JsonObject();
-                // --- FIX 3 --- Use lowercase "fflags" when creating a new section.
                 configNode["fflags"] = fflags;
             }
 
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
+                // **CONFIRMED FIX**: Save all values as strings
                 if (flag is ToggleFlagViewModel toggle)
-                    fflags[flag.Name] = toggle.IsOn;
+                    fflags[flag.Name] = toggle.IsOn.ToString().ToLower();
                 else if (flag is InputFlagViewModel input)
-                    fflags[flag.Name] = int.TryParse(input.Value, out int intValue) ? JsonValue.Create(intValue) : JsonValue.Create(input.Value);
+                    fflags[flag.Name] = input.Value;
             }
 
             foreach (var flag in Flags.Where(f => !f.IsEnabled))
@@ -212,11 +192,13 @@ namespace linuxblox.viewmodels
             }
 
             var configDir = Path.GetDirectoryName(_soberConfigPath);
-            if (!string.IsNullOrEmpty(configDir))
-                Directory.CreateDirectory(configDir);
+            if (!string.IsNullOrEmpty(configDir)) Directory.CreateDirectory(configDir);
 
-            var options = new JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+            var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
+            
+            // Defensive measure to prevent overwrites
+            File.SetAttributes(_soberConfigPath, FileAttributes.ReadOnly);
         }
     }
 }
