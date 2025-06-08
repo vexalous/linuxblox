@@ -180,9 +180,6 @@ namespace linuxblox.viewmodels
                 }
             }
             
-            if (fflags.Count == 0)
-                configNode.AsObject().Remove("FFlags");
-
             var configDir = Path.GetDirectoryName(_soberConfigPath);
             if (!string.IsNullOrEmpty(configDir))
                 Directory.CreateDirectory(configDir);
