@@ -14,7 +14,6 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
         this.WhenActivated(disposables => 
         {
-            // This block's presence activates the ViewModel.
         });
     }
 }
