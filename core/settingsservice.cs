@@ -61,7 +61,7 @@ public static class SettingsService
         try
         {
             await using var stream = new FileStream(_settingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-            return await JsonSerializer.DeserializeAsync(stream, AppSettingsContext.Default.AppSettings).ConfigureAwait(false) ?? Default;
+            return await JsonSerializer.DeserializeAsync<AppSettings>(stream, AppSettingsContext.Default.AppSettings).ConfigureAwait(false) ?? Default;
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {

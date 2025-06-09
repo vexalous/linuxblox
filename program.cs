@@ -3,7 +3,7 @@ using System;
 
 namespace linuxblox;
 
-class Program
+internal sealed class Program
 {
     [STAThread]
     public static void Main(string[] args) => BuildAvaloniaApp()

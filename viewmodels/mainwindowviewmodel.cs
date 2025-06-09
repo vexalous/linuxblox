@@ -105,11 +105,11 @@ namespace linuxblox.viewmodels
         private void PopulateDefaultFlags()
         {
             Flags.Clear();
-            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", Value = "144" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", InputValue = "144" });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsPreferVulkan", Description = "Prefer Vulkan Renderer", IsOn = true });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", Value = "0" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", InputValue = "4" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", InputValue = "0" });
         }
 
         private async Task<string> LoadSettingsFromFileAsync()
@@ -139,7 +139,7 @@ namespace linuxblox.viewmodels
                                 inputFlag.InputValue = value; // Corrected Value to InputValue
                         }
                     }
-                }).ConfigureAwait(false);
+                });
                 return "Sober config file loaded successfully.";
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or ArgumentException) { return $"Error reading Sober config: {ex.Message}"; }
@@ -178,7 +178,7 @@ namespace linuxblox.viewmodels
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
                 if (flag is ToggleFlagViewModel toggle)
-                    newFflags[flag.Name] = toggle.IsOn.ToString(CultureInfo.InvariantCulture).ToLower(CultureInfo.InvariantCulture);
+                    newFflags[flag.Name] = toggle.IsOn.ToString(CultureInfo.InvariantCulture).ToUpperInvariant();
                 else if (flag is InputFlagViewModel input)
                     newFflags[flag.Name] = input.InputValue;
             }
