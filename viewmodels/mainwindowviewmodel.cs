@@ -13,7 +13,6 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using System.Globalization;
 
 namespace linuxblox.viewmodels
 {
@@ -105,11 +104,11 @@ namespace linuxblox.viewmodels
         private void PopulateDefaultFlags()
         {
             Flags.Clear();
-            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", InputValue = "144" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", Value = "144" });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsPreferVulkan", Description = "Prefer Vulkan Renderer", IsOn = true });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", InputValue = "4" });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", InputValue = "0" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", Value = "0" });
         }
 
         private async Task<string> LoadSettingsFromFileAsync()
@@ -118,7 +117,7 @@ namespace linuxblox.viewmodels
 
             try
             {
-                var jsonString = await File.ReadAllTextAsync(_soberConfigPath).ConfigureAwait(false);
+                var jsonString = await File.ReadAllTextAsync(_soberConfigPath);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
                 var configNode = JsonNode.Parse(jsonString);
@@ -136,13 +135,13 @@ namespace linuxblox.viewmodels
                             if (flag is ToggleFlagViewModel toggleFlag)
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
-                                inputFlag.InputValue = value; // Corrected Value to InputValue
+                                inputFlag.Value = value;
                         }
                     }
                 });
                 return "Sober config file loaded successfully.";
             }
-            catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or ArgumentException) { return $"Error reading Sober config: {ex.Message}"; }
+            catch (Exception ex) { return $"Error reading Sober config: {ex.Message}"; }
         }
 
         private void PlayRoblox()
@@ -159,7 +158,7 @@ namespace linuxblox.viewmodels
 
             try
             {
-                var json = await File.ReadAllTextAsync(_soberConfigPath).ConfigureAwait(false);
+                var json = await File.ReadAllTextAsync(_soberConfigPath);
                 return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
             }
             catch (Exception ex)
@@ -172,15 +171,15 @@ namespace linuxblox.viewmodels
         {
             if (string.IsNullOrEmpty(_soberConfigPath)) throw new InvalidOperationException("Config path not set.");
 
-            var configNode = await LoadOrCreateConfigNodeAsync().ConfigureAwait(false);
+            var configNode = await LoadOrCreateConfigNodeAsync();
 
             var newFflags = new JsonObject();
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
                 if (flag is ToggleFlagViewModel toggle)
-                    newFflags[flag.Name] = toggle.IsOn.ToString(CultureInfo.InvariantCulture).ToUpperInvariant();
+                    newFflags[flag.Name] = toggle.IsOn.ToString().ToLower();
                 else if (flag is InputFlagViewModel input)
-                    newFflags[flag.Name] = input.InputValue;
+                    newFflags[flag.Name] = input.Value;
             }
 
             configNode[FFlagsKey] = newFflags;
@@ -189,7 +188,7 @@ namespace linuxblox.viewmodels
             if (!string.IsNullOrEmpty(configDir)) Directory.CreateDirectory(configDir);
 
             var options = new JsonSerializerOptions { WriteIndented = true };
-            await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
         }
     }
 }

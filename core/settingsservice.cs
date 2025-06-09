@@ -14,7 +14,7 @@ public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(AppSettings))]
-internal sealed partial class AppSettingsContext : JsonSerializerContext
+internal partial class AppSettingsContext : JsonSerializerContext
 {
 }
 
@@ -60,8 +60,15 @@ public static class SettingsService
     {
         try
         {
-            await using var stream = new FileStream(_settingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-            return await JsonSerializer.DeserializeAsync<AppSettings>(stream, AppSettingsContext.Default.AppSettings).ConfigureAwait(false) ?? Default;
+            var stream = new FileStream(_settingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+            try
+            {
+                return await JsonSerializer.DeserializeAsync<AppSettings>(stream, AppSettingsContext.Default.AppSettings).ConfigureAwait(false) ?? Default;
+            }
+            finally
+            {
+                await stream.DisposeAsync().ConfigureAwait(false);
+            }
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
@@ -72,7 +79,14 @@ public static class SettingsService
     public static async Task SaveSettingsAsync(AppSettings settings)
     {
         Directory.CreateDirectory(_configDirectory);
-        await using var stream = new FileStream(_settingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
-        await JsonSerializer.SerializeAsync(stream, settings, AppSettingsContext.Default.AppSettings).ConfigureAwait(false);
+        var stream = new FileStream(_settingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+        try
+        {
+            await JsonSerializer.SerializeAsync(stream, settings, AppSettingsContext.Default.AppSettings).ConfigureAwait(false);
+        }
+        finally
+        {
+            await stream.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

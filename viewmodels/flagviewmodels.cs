@@ -32,12 +32,12 @@ namespace linuxblox.viewmodels
     public class InputFlagViewModel : FlagViewModel
     {
         private string _value = "";
-        public string InputValue
+        public string Value
         {
             get => _value;
             set => this.RaiseAndSetIfChanged(ref _value, value);
         }
 
-        public override string GetValue() => InputValue;
+        public override string GetValue() => Value;
     }
 }

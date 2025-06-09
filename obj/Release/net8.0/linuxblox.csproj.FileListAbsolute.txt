@@ -1,8 +1,0 @@
-/app/obj/Release/net8.0/linuxblox.csproj.AssemblyReference.cache
-/app/obj/Release/net8.0/Avalonia/Resources.Inputs.cache
-/app/obj/Release/net8.0/Avalonia/resources
-/app/obj/Release/net8.0/linuxblox.GeneratedMSBuildEditorConfig.editorconfig
-/app/obj/Release/net8.0/linuxblox.AssemblyInfoInputs.cache
-/app/obj/Release/net8.0/linuxblox.AssemblyInfo.cs
-/app/obj/Release/net8.0/linuxblox.csproj.CoreCompileInputs.cache
-/app/obj/Release/net8.0/linuxblox.sourcelink.json
