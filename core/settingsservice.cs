@@ -3,10 +3,14 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static linuxblox.core.AppSettings;
 
 namespace linuxblox.core;
 
-public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath);
+public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
+{
+    public static readonly AppSettings Default = new(false, null);
+}
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(AppSettings))]
@@ -21,20 +25,15 @@ public static class SettingsService
 
     private static string GetConfigDirectory()
     {
-        string? home = Environment.GetEnvironmentVariable("HOME");
         string? configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-
         if (!string.IsNullOrEmpty(configHome))
-        {
             return Path.Combine(configHome, "linuxblox");
-        }
-        
-        if (!string.IsNullOrEmpty(home))
-        {
-            return Path.Combine(home, ".config", "linuxblox");
-        }
 
-        throw new NotSupportedException("Could not determine configuration directory. Set the XDG_CONFIG_HOME or HOME environment variables.");
+        string? home = Environment.GetEnvironmentVariable("HOME");
+        if (!string.IsNullOrEmpty(home))
+            return Path.Combine(home, ".config", "linuxblox");
+        
+        throw new NotSupportedException("Could not determine configuration directory. Set XDG_CONFIG_HOME or HOME.");
     }
 
     public static AppSettings LoadSettings()
@@ -42,11 +41,11 @@ public static class SettingsService
         try
         {
             var json = File.ReadAllText(_settingsFilePath);
-            return JsonSerializer.Deserialize(json, AppSettingsContext.Default.AppSettings) ?? default;
+            return JsonSerializer.Deserialize(json, AppSettingsContext.Default.AppSettings) ?? Default;
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
-            return default;
+            return Default;
         }
     }
 
@@ -61,19 +60,19 @@ public static class SettingsService
     {
         try
         {
-            var json = await File.ReadAllTextAsync(_settingsFilePath);
-            return JsonSerializer.Deserialize(json, AppSettingsContext.Default.AppSettings) ?? default;
+            await using var stream = new FileStream(_settingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+            return await JsonSerializer.DeserializeAsync(stream, AppSettingsContext.Default.AppSettings) ?? Default;
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
-            return default;
+            return Default;
         }
     }
 
     public static async Task SaveSettingsAsync(AppSettings settings)
     {
         Directory.CreateDirectory(_configDirectory);
-        await using var fileStream = new FileStream(_settingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
-        await JsonSerializer.SerializeAsync(fileStream, settings, AppSettingsContext.Default.AppSettings);
+        await using var stream = new FileStream(_settingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+        await JsonSerializer.SerializeAsync(stream, settings, AppSettingsContext.Default.AppSettings);
     }
 }
