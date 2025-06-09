@@ -108,6 +108,8 @@ namespace linuxblox.viewmodels
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
             Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
             Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", Value = "0" });
+            Flags.Add(new ToggleFlagViewModel { Name = "FFlagDisableNewIGMinDUA", Description = "Disable New In-Game Menu (Reverts to Old Menu)", IsOn = false });
+            Flags.Add(new ToggleFlagViewModel { Name = "FFlagEnableInGameMenuControls", Description = "Enable 'Controls' Button in In-Game Menu", IsOn = false });
         }
 
         private async Task<string> LoadSettingsFromFileAsync()
@@ -136,7 +138,7 @@ namespace linuxblox.viewmodels
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
                                 inputFlag.Value = value;
-                        } else { flag.IsEnabled = false; }
+                        }
                     }
                 });
                 return "Sober config file loaded successfully.";
