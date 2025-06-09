@@ -1,56 +1,43 @@
 using ReactiveUI;
 
-namespace linuxblox.viewmodels;
-
-public abstract class FlagViewModel : ReactiveObject
+namespace linuxblox.viewmodels
 {
-    public string Name { get; init; }
-    public string Description { get; init; }
-
-    private bool _isEnabled = true;
-    public bool IsEnabled
+    public abstract class FlagViewModel : ReactiveObject
     {
-        get => _isEnabled;
-        set => this.RaiseAndSetIfChanged(ref _isEnabled, value);
+        public required string Name { get; init; }
+        public required string Description { get; init; }
+
+        private bool _isEnabled = true;
+        public bool IsEnabled
+        {
+            get => _isEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isEnabled, value);
+        }
+
+        public abstract string GetValue();
     }
 
-    protected FlagViewModel(string name, string description)
+    public class ToggleFlagViewModel : FlagViewModel
     {
-        Name = name;
-        Description = description;
+        private bool _isOn;
+        public bool IsOn
+        {
+            get => _isOn;
+            set => this.RaiseAndSetIfChanged(ref _isOn, value);
+        }
+
+        public override string GetValue() => IsOn.ToString();
     }
 
-    public abstract string GetValue();
-}
-
-public class ToggleFlagViewModel : FlagViewModel
-{
-    private bool _isOn;
-    public bool IsOn
+    public class InputFlagViewModel : FlagViewModel
     {
-        get => _isOn;
-        set => this.RaiseAndSetIfChanged(ref _isOn, value);
+        private string _value = "";
+        public string Value
+        {
+            get => _value;
+            set => this.RaiseAndSetIfChanged(ref _value, value);
+        }
+
+        public override string GetValue() => Value;
     }
-
-    public ToggleFlagViewModel(string name, string description) : base(name, description)
-    {
-    }
-
-    public override string GetValue() => IsOn.ToString();
-}
-
-public class InputFlagViewModel : FlagViewModel
-{
-    private string _value = "";
-    public string Value
-    {
-        get => _value;
-        set => this.RaiseAndSetIfChanged(ref _value, value);
-    }
-
-    public InputFlagViewModel(string name, string description) : base(name, description)
-    {
-    }
-
-    public override string GetValue() => Value;
 }
