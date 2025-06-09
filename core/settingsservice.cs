@@ -14,7 +14,7 @@ public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(AppSettings))]
-internal partial class AppSettingsContext : JsonSerializerContext
+internal sealed partial class AppSettingsContext : JsonSerializerContext
 {
 }
 
@@ -61,7 +61,7 @@ public static class SettingsService
         try
         {
             await using var stream = new FileStream(_settingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-            return await JsonSerializer.DeserializeAsync(stream, AppSettingsContext.Default.AppSettings) ?? Default;
+            return await JsonSerializer.DeserializeAsync(stream, AppSettingsContext.Default.AppSettings).ConfigureAwait(false) ?? Default;
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
@@ -73,6 +73,6 @@ public static class SettingsService
     {
         Directory.CreateDirectory(_configDirectory);
         await using var stream = new FileStream(_settingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
-        await JsonSerializer.SerializeAsync(stream, settings, AppSettingsContext.Default.AppSettings);
+        await JsonSerializer.SerializeAsync(stream, settings, AppSettingsContext.Default.AppSettings).ConfigureAwait(false);
     }
 }

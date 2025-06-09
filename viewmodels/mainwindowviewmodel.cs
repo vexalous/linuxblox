@@ -13,6 +13,7 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace linuxblox.viewmodels
 {
@@ -117,7 +118,7 @@ namespace linuxblox.viewmodels
 
             try
             {
-                var jsonString = await File.ReadAllTextAsync(_soberConfigPath);
+                var jsonString = await File.ReadAllTextAsync(_soberConfigPath).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
                 var configNode = JsonNode.Parse(jsonString);
@@ -135,13 +136,13 @@ namespace linuxblox.viewmodels
                             if (flag is ToggleFlagViewModel toggleFlag)
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
-                                inputFlag.Value = value;
+                                inputFlag.InputValue = value; // Corrected Value to InputValue
                         }
                     }
-                });
+                }).ConfigureAwait(false);
                 return "Sober config file loaded successfully.";
             }
-            catch (Exception ex) { return $"Error reading Sober config: {ex.Message}"; }
+            catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or ArgumentException) { return $"Error reading Sober config: {ex.Message}"; }
         }
 
         private void PlayRoblox()
@@ -158,7 +159,7 @@ namespace linuxblox.viewmodels
 
             try
             {
-                var json = await File.ReadAllTextAsync(_soberConfigPath);
+                var json = await File.ReadAllTextAsync(_soberConfigPath).ConfigureAwait(false);
                 return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
             }
             catch (Exception ex)
@@ -171,15 +172,15 @@ namespace linuxblox.viewmodels
         {
             if (string.IsNullOrEmpty(_soberConfigPath)) throw new InvalidOperationException("Config path not set.");
 
-            var configNode = await LoadOrCreateConfigNodeAsync();
+            var configNode = await LoadOrCreateConfigNodeAsync().ConfigureAwait(false);
 
             var newFflags = new JsonObject();
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
                 if (flag is ToggleFlagViewModel toggle)
-                    newFflags[flag.Name] = toggle.IsOn.ToString().ToLower();
+                    newFflags[flag.Name] = toggle.IsOn.ToString(CultureInfo.InvariantCulture).ToLower(CultureInfo.InvariantCulture);
                 else if (flag is InputFlagViewModel input)
-                    newFflags[flag.Name] = input.Value;
+                    newFflags[flag.Name] = input.InputValue;
             }
 
             configNode[FFlagsKey] = newFflags;
@@ -188,7 +189,7 @@ namespace linuxblox.viewmodels
             if (!string.IsNullOrEmpty(configDir)) Directory.CreateDirectory(configDir);
 
             var options = new JsonSerializerOptions { WriteIndented = true };
-            await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options));
+            await File.WriteAllTextAsync(_soberConfigPath, configNode.ToJsonString(options)).ConfigureAwait(false);
         }
     }
 }
