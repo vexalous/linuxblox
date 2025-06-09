@@ -2,9 +2,9 @@ name: DotNet Analyzers
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
     - cron: '0 0 * * *'
 
@@ -22,16 +22,24 @@ jobs:
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0'
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-    - name: Restore .NET dependencies
-      run: dotnet restore linuxblox.csproj
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0'
 
-    - name: Build with .NET Analyzers
-      run: dotnet build --no-restore --configuration Release /p:EnableNETAnalyzers=true /p:AnalysisLevel=latest-All /p:TreatWarningsAsErrors=true linuxblox.csproj
+      - name: Restore .NET dependencies
+        run: dotnet restore linuxblox.csproj
+
+      - name: Build with .NET Analyzers
+        run: dotnet build --no-restore --configuration Release /p:EnableNETAnalyzers=true /p:AnalysisLevel=latest-All /p:TreatWarningsAsErrors=true linuxblox.csproj
