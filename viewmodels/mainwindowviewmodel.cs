@@ -12,7 +12,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace linuxblox.viewmodels
@@ -20,6 +19,8 @@ namespace linuxblox.viewmodels
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
         public ViewModelActivator Activator { get; }
+
+        private const string FFlagsKey = "fflags";
 
         private readonly ObservableAsPropertyHelper<bool> _isInitialized;
         public bool IsInitialized => _isInitialized.Value;
@@ -72,7 +73,7 @@ namespace linuxblox.viewmodels
                                  .DisposeWith(disposables);
             });
         }
-        
+
         private static IObservable<string> CreateStatusMessageObservable(
                     ReactiveCommand<Unit, string> initialize,
                     ReactiveCommand<Unit, Unit> save,
@@ -116,12 +117,11 @@ namespace linuxblox.viewmodels
 
             try
             {
-                File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
-                string jsonString = await File.ReadAllTextAsync(_soberConfigPath);
+                var jsonString = await File.ReadAllTextAsync(_soberConfigPath);
                 if (string.IsNullOrWhiteSpace(jsonString)) return "Sober config is empty.";
 
-                JsonNode? configNode = JsonNode.Parse(jsonString);
-                if (configNode?["fflags"] is not JsonObject fflags) return "Sober config loaded, but no 'fflags' section found.";
+                var configNode = JsonNode.Parse(jsonString);
+                if (configNode?[FFlagsKey] is not JsonObject fflags) return "Sober config loaded, but no 'fflags' section found.";
 
                 var loadedFlagsData = fflags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
 
@@ -146,21 +146,25 @@ namespace linuxblox.viewmodels
 
         private void PlayRoblox()
         {
-            try { Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false }); }
-            catch (Exception) { throw; }
+            Process.Start(new ProcessStartInfo("flatpak", "run org.vinegarhq.Sober") { UseShellExecute = false });
         }
-
+        
         private async Task<JsonNode> LoadOrCreateConfigNodeAsync()
         {
-            if (string.IsNullOrEmpty(_soberConfigPath)) return new JsonObject();
-            if (!File.Exists(_soberConfigPath)) return new JsonObject();
+            if (string.IsNullOrEmpty(_soberConfigPath) || !File.Exists(_soberConfigPath))
+            {
+                return new JsonObject();
+            }
+
             try
             {
-                File.SetAttributes(_soberConfigPath, FileAttributes.Normal);
                 var json = await File.ReadAllTextAsync(_soberConfigPath);
                 return string.IsNullOrWhiteSpace(json) ? new JsonObject() : JsonNode.Parse(json) ?? new JsonObject();
             }
-            catch (Exception ex) { throw new InvalidOperationException($"Could not read config: {_soberConfigPath}", ex); }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Could not read config: {_soberConfigPath}", ex);
+            }
         }
 
         private async Task SaveChangesAsync()
@@ -169,29 +173,16 @@ namespace linuxblox.viewmodels
 
             var configNode = await LoadOrCreateConfigNodeAsync();
 
-            if (configNode is JsonObject obj)
-            {
-                obj.Remove("FFlags");
-            }
-            
-            if (configNode["fflags"] is not JsonObject fflags)
-            {
-                fflags = new JsonObject();
-                configNode["fflags"] = fflags;
-            }
-
+            var newFflags = new JsonObject();
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
                 if (flag is ToggleFlagViewModel toggle)
-                    fflags[flag.Name] = toggle.IsOn.ToString().ToLower();
+                    newFflags[flag.Name] = toggle.IsOn.ToString().ToLower();
                 else if (flag is InputFlagViewModel input)
-                    fflags[flag.Name] = input.Value;
+                    newFflags[flag.Name] = input.Value;
             }
 
-            foreach (var flag in Flags.Where(f => !f.IsEnabled))
-            {
-                fflags.Remove(flag.Name);
-            }
+            configNode[FFlagsKey] = newFflags;
 
             var configDir = Path.GetDirectoryName(_soberConfigPath);
             if (!string.IsNullOrEmpty(configDir)) Directory.CreateDirectory(configDir);
