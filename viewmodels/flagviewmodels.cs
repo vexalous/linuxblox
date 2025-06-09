@@ -7,7 +7,7 @@ namespace linuxblox.viewmodels
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
         
-        private bool _isEnabled;
+        private bool _isEnabled = true;
         public bool IsEnabled
         {
             get => _isEnabled;

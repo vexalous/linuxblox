@@ -37,18 +37,16 @@
                BorderThickness="0">
         <ListBox.DataTemplates>
           <DataTemplate DataType="{x:Type vm:InputFlagViewModel}">
-            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5">
-              <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
-              <TextBox Grid.Column="2" Text="{Binding Value}" MinWidth="100" IsEnabled="{Binding IsEnabled}"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="0,5">
+              <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
+              <TextBox Grid.Column="1" Text="{Binding Value}" MinWidth="100" IsEnabled="{Binding IsEnabled}"/>
             </Grid>
           </DataTemplate>
           
           <DataTemplate DataType="{x:Type vm:ToggleFlagViewModel}">
-            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5">
-              <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
-              <ToggleSwitch Grid.Column="2" IsChecked="{Binding IsOn}" IsEnabled="{Binding IsEnabled}"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="0,5">
+              <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
+              <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsOn}" IsEnabled="{Binding IsEnabled}"/>
             </Grid>
           </DataTemplate>
         </ListBox.DataTemplates>

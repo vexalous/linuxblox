@@ -138,7 +138,7 @@ namespace linuxblox.viewmodels
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
                                 inputFlag.Value = value;
-                        } else { flag.IsEnabled = false; }
+                        }
                     }
                 });
                 return "Sober config file loaded successfully.";
