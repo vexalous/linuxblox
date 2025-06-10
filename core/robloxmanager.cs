@@ -77,7 +77,18 @@ namespace linuxblox.core
                 var rawFlags = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString) ?? new();
                 return rawFlags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString() ?? "");
             }
-            catch { return new Dictionary<string, string>(); }
+            catch (JsonException)
+            {
+                return new Dictionary<string, string>();
+            }
+            catch (IOException)
+            {
+                return new Dictionary<string, string>();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public static void WriteFlags(string path, Dictionary<string, string> flags)
