@@ -136,7 +136,7 @@ namespace linuxblox.viewmodels
                             if (flag is ToggleFlagViewModel toggleFlag)
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
-                                inputFlag.Value = value;
+                                inputFlag.Value = value.Trim();
                         }
                     }
                 });
