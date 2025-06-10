@@ -21,7 +21,12 @@
     </Border>
 
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="5" Margin="0,0,0,5">
-        <Button Name="HamburgerButton" Content="☰" Command="{Binding TogglePaneCommand}" Padding="10,5"/>
+        <Button Name="HamburgerButton"
+                Content="☰"
+                Command="{Binding TogglePaneCommand}"
+                AutomationProperties.Name="Toggle navigation pane"
+                ToolTip.Tip="Toggle navigation pane"
+                Padding="10,5"/>
     </StackPanel>
 
     <SplitView DisplayMode="CompactOverlay" PanePlacement="Left" IsPaneOpen="{Binding IsPaneOpen}">
@@ -37,16 +42,7 @@
       </SplitView.Pane>
 
       <SplitView.Content>
-        <ContentControl Content="{Binding CurrentView}">
-            <ContentControl.Resources>
-                <DataTemplate DataType="{x:Static vm:MainWindowViewModel+MainView.LaunchAndFlags}">
-                    <views:LaunchAndFlagsView />
-                </DataTemplate>
-                <DataTemplate DataType="{x:Static vm:MainWindowViewModel+MainView.Settings}">
-                    <views:SettingsView />
-                </DataTemplate>
-            </ContentControl.Resources>
-        </ContentControl>
+        <ContentControl Content="{Binding CurrentView}"/>
       </SplitView.Content>
     </SplitView>
   </DockPanel>
