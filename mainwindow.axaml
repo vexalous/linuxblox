@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:linuxblox.viewmodels"
+        xmlns:views="using:linuxblox.views"
         x:Class="linuxblox.MainWindow"
         Title="LinuxBlox"
         Width="700" Height="500">
@@ -19,42 +20,31 @@
                  Opacity="0.7"/>
     </Border>
 
-    <StackPanel Spacing="15">
-      <Button Content="Launch Sober" 
-              Command="{Binding PlayCommand}" 
-              HorizontalAlignment="Left" 
-              Padding="20,10" 
-              Background="Green"/>
-        
-      <Separator Margin="0,10"/>
-        
-      <TextBlock Text="FastFlag Editor"
-                 FontWeight="Bold"
-                 FontSize="16"/>
+    <SplitView DisplayMode="CompactOverlay" PanePlacement="Left">
+      <SplitView.Pane>
+        <StackPanel Margin="10">
+          <Button Content="Launch" Name="LaunchFlagsButton" Margin="0,0,0,5" Command="{Binding ShowLaunchAndFlagsViewCommand}"/>
+          <Button Content="Settings" Name="SettingsButton" Command="{Binding ShowSettingsViewCommand}"/>
+        </StackPanel>
+      </SplitView.Pane>
 
-      <ListBox ItemsSource="{Binding Flags}"
-               Background="Transparent"
-               BorderThickness="0">
-        <ListBox.DataTemplates>
-          <DataTemplate DataType="{x:Type vm:InputFlagViewModel}">
-            <Grid ColumnDefinitions="*,Auto" Margin="0,5">
-              <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
-              <TextBox Grid.Column="1" Text="{Binding Value}" MinWidth="100" IsEnabled="{Binding IsEnabled}"/>
-            </Grid>
-          </DataTemplate>
-          
-          <DataTemplate DataType="{x:Type vm:ToggleFlagViewModel}">
-            <Grid ColumnDefinitions="*,Auto" Margin="0,5">
-              <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
-              <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsOn}" IsEnabled="{Binding IsEnabled}"/>
-            </Grid>
-          </DataTemplate>
-        </ListBox.DataTemplates>
-      </ListBox>
-      
-      <Button Content="Save Flags" 
-              Command="{Binding SaveFlagsCommand}" 
-              HorizontalAlignment="Right"/>
-    </StackPanel>
+      <SplitView.Content>
+        <ContentControl>
+          <ContentControl.Style>
+            <Style Selector="ContentControl">
+              <Setter Property="Content">
+                <views:LaunchAndFlagsView/>
+              </Setter>
+            </Style>
+            <!-- This Style is more specific due to the attribute selector, so it should take precedence. -->
+            <Style Selector="ContentControl[DataContext.CurrentViewName='Settings']">
+              <Setter Property="Content">
+                <views:SettingsView/>
+              </Setter>
+            </Style>
+          </ContentControl.Style>
+        </ContentControl>
+      </SplitView.Content>
+    </SplitView>
   </DockPanel>
 </Window>

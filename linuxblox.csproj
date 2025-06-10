@@ -14,4 +14,22 @@
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AvaloniaXaml Update="views\LaunchAndFlagsView.axaml">
+      <Generator>MSBuild:Compile</Generator>
+    </AvaloniaXaml>
+    <AvaloniaXaml Update="views\SettingsView.axaml">
+      <Generator>MSBuild:Compile</Generator>
+    </AvaloniaXaml>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="views\LaunchAndFlagsView.axaml.cs">
+      <DependentUpon>LaunchAndFlagsView.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="views\SettingsView.axaml.cs">
+      <DependentUpon>SettingsView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

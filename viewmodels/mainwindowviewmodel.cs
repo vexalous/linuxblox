@@ -38,6 +38,16 @@ namespace linuxblox.viewmodels
         public ReactiveCommand<Unit, Unit> PlayCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveFlagsCommand { get; }
 
+        private string _currentViewName = "LaunchAndFlags";
+        public string CurrentViewName
+        {
+            get => _currentViewName;
+            set => this.RaiseAndSetIfChanged(ref _currentViewName, value);
+        }
+
+        public ReactiveCommand<Unit, Unit> ShowLaunchAndFlagsViewCommand { get; }
+        public ReactiveCommand<Unit, Unit> ShowSettingsViewCommand { get; }
+
         public MainWindowViewModel()
         {
             Activator = new ViewModelActivator();
@@ -66,6 +76,9 @@ namespace linuxblox.viewmodels
 
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
+
+            ShowLaunchAndFlagsViewCommand = ReactiveCommand.Create(() => { CurrentViewName = "LaunchAndFlags"; });
+            ShowSettingsViewCommand = ReactiveCommand.Create(() => { CurrentViewName = "Settings"; });
 
             this.WhenActivated(disposables =>
             {

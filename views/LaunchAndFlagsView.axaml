@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:linuxblox.viewmodels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="linuxblox.views.LaunchAndFlagsView">
+  <!-- Assuming DataContext will be MainWindowViewModel -->
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <StackPanel Spacing="15" Margin="10">
+    <Button Content="Launch Sober"
+            Command="{Binding PlayCommand}"
+            HorizontalAlignment="Left"
+            Padding="20,10"
+            Background="Green"/>
+
+    <!-- Flag editor elements removed from here -->
+
+  </StackPanel>
+</UserControl>
