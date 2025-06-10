@@ -19,7 +19,7 @@ namespace LinuxBlox.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
-        public enum MainView { Launch, Settings }
+        public enum MainView { LaunchAndFlags, Settings }
 
         public ViewModelActivator Activator { get; }
 
@@ -40,21 +40,26 @@ namespace LinuxBlox.ViewModels
         public ReactiveCommand<Unit, Unit> PlayCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveFlagsCommand { get; }
 
-        private MainView _currentView = MainView.Launch;
+        private MainView _currentView = MainView.LaunchAndFlags;
         public MainView CurrentView
         {
             get => _currentView;
             set => this.RaiseAndSetIfChanged(ref _currentView, value);
         }
 
-        public ReactiveCommand<Unit, MainView> ShowLaunchAndFlagsViewCommand { get; }
-        public ReactiveCommand<Unit, MainView> ShowSettingsViewCommand { get; }
+        public ReactiveCommand<MainView, MainView> SwitchViewCommand { get; }
 
+        // TODO: Load IsPaneOpen state from persistent storage (e.g., ISettingsStore or config file)
+        // For now, defaulting to false.
         private bool _isPaneOpen = false;
         public bool IsPaneOpen
         {
             get => _isPaneOpen;
-            set => this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
+                // TODO: Save IsPaneOpen state to persistent storage (e.g., ISettingsStore or config file)
+            }
         }
 
         public ReactiveCommand<Unit, Unit> TogglePaneCommand { get; }
@@ -88,11 +93,8 @@ namespace LinuxBlox.ViewModels
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
 
-            ShowLaunchAndFlagsViewCommand = ReactiveCommand.Create<Unit, MainView>(() => MainView.Launch);
-            ShowSettingsViewCommand = ReactiveCommand.Create<Unit, MainView>(() => MainView.Settings);
-
-            ShowLaunchAndFlagsViewCommand.Subscribe(view => CurrentView = view);
-            ShowSettingsViewCommand.Subscribe(view => CurrentView = view);
+            SwitchViewCommand = ReactiveCommand.Create<MainView, MainView>(view => view);
+            SwitchViewCommand.Subscribe(view => CurrentView = view);
 
             TogglePaneCommand = ReactiveCommand.Create(() => IsPaneOpen = !IsPaneOpen);
 
