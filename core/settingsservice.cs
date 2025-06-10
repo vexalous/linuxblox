@@ -14,7 +14,7 @@ public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(AppSettings))]
-internal partial class AppSettingsContext : JsonSerializerContext
+internal sealed partial class AppSettingsContext : JsonSerializerContext
 {
 }
 
