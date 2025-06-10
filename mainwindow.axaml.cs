@@ -2,7 +2,7 @@ using Avalonia.ReactiveUI;
 using LinuxBlox.ViewModels;
 using ReactiveUI;
 
-namespace linuxblox;
+namespace LinuxBlox;
 
 public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
