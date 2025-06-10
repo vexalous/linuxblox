@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace linuxblox.views
+namespace LinuxBlox.Views
 {
     public partial class SettingsView : UserControl
     {
