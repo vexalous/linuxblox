@@ -182,7 +182,7 @@ namespace linuxblox.viewmodels
                 if (flag is ToggleFlagViewModel toggle)
                     newFflags[flag.Name] = toggle.IsOn.ToString().ToUpperInvariant();
                 else if (flag is InputFlagViewModel input)
-                    newFflags[flag.Name] = input.Value;
+                    newFflags[flag.Name] = input.Value.Trim();
             }
 
             configNode[FFlagsKey] = newFflags;
