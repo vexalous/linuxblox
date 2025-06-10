@@ -105,11 +105,11 @@ namespace linuxblox.viewmodels
         private void PopulateDefaultFlags()
         {
             Flags.Clear();
-            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", EnteredValue = "144" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntTaskSchedulerTargetFps", Description = "FPS Limit", Value = "144" });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsPreferVulkan", Description = "Prefer Vulkan Renderer", IsOn = true });
             Flags.Add(new ToggleFlagViewModel { Name = "FFlagDebugGraphicsDisablePostFX", Description = "Disable Post-Processing Effects", IsOn = false });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", EnteredValue = "4" });
-            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", EnteredValue = "0" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntPostEffectQualityLevel", Description = "Post Effect Quality (0-4)", Value = "4" });
+            Flags.Add(new InputFlagViewModel { Name = "DFIntCanHideGuiGroupId", Description = "Set to a Group ID to enable visibility toggles (Ctrl+Shift+G, etc). Set to 0 to disable.", Value = "0" });
         }
 
         private async Task<string> LoadSettingsFromFileAsync()
@@ -136,7 +136,7 @@ namespace linuxblox.viewmodels
                             if (flag is ToggleFlagViewModel toggleFlag)
                                 toggleFlag.IsOn = value.Equals("true", StringComparison.OrdinalIgnoreCase);
                             else if (flag is InputFlagViewModel inputFlag)
-                                inputFlag.EnteredValue = value;
+                                inputFlag.Value = value.Trim();
                         }
                     }
                 });
@@ -182,7 +182,7 @@ namespace linuxblox.viewmodels
                 if (flag is ToggleFlagViewModel toggle)
                     newFflags[flag.Name] = toggle.IsOn.ToString().ToUpperInvariant();
                 else if (flag is InputFlagViewModel input)
-                    newFflags[flag.Name] = input.EnteredValue;
+                    newFflags[flag.Name] = input.Value.Trim();
             }
 
             configNode[FFlagsKey] = newFflags;

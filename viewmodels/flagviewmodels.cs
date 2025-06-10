@@ -13,8 +13,6 @@ namespace linuxblox.viewmodels
             get => _isEnabled;
             set => this.RaiseAndSetIfChanged(ref _isEnabled, value);
         }
-
-        public abstract string GetValue();
     }
 
     public class ToggleFlagViewModel : FlagViewModel
@@ -25,19 +23,15 @@ namespace linuxblox.viewmodels
             get => _isOn;
             set => this.RaiseAndSetIfChanged(ref _isOn, value);
         }
-
-        public override string GetValue() => IsOn.ToString();
     }
 
     public class InputFlagViewModel : FlagViewModel
     {
         private string _enteredValue = "";
-        public string EnteredValue
+        public string Value
         {
             get => _enteredValue;
             set => this.RaiseAndSetIfChanged(ref _enteredValue, value);
         }
-
-        public override string GetValue() => EnteredValue;
     }
 }
