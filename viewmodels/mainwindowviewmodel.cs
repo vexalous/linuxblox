@@ -142,7 +142,9 @@ namespace linuxblox.viewmodels
                 });
                 return "Sober config file loaded successfully.";
             }
-            catch (Exception ex) { return $"Error reading Sober config: {ex.Message}"; }
+            catch (IOException ex) { return $"Error reading Sober config (IO): {ex.Message}"; }
+            catch (JsonException ex) { return $"Error reading Sober config (JSON): {ex.Message}"; }
+            catch (UnauthorizedAccessException ex) { return $"Error reading Sober config (Access): {ex.Message}"; }
         }
 
         private void PlayRoblox()
@@ -178,7 +180,7 @@ namespace linuxblox.viewmodels
             foreach (var flag in Flags.Where(f => f.IsEnabled))
             {
                 if (flag is ToggleFlagViewModel toggle)
-                    newFflags[flag.Name] = toggle.IsOn.ToString().ToLowerInvariant();
+                    newFflags[flag.Name] = toggle.IsOn.ToString().ToUpperInvariant();
                 else if (flag is InputFlagViewModel input)
                     newFflags[flag.Name] = input.EnteredValue;
             }
