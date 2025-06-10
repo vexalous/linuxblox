@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:linuxblox.viewmodels"
-        xmlns:views="using:linuxblox.views"
+        xmlns:vm="using:LinuxBlox.ViewModels"
+        xmlns:views="using:LinuxBlox.Views"
         x:Class="linuxblox.MainWindow"
         Title="LinuxBlox"
         Width="700" Height="500">

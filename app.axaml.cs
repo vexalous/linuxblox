@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
-using linuxblox.viewmodels;
+using LinuxBlox.ViewModels;
 using ReactiveUI;
 using Splat;
 

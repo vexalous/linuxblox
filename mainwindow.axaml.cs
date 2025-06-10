@@ -1,5 +1,5 @@
 using Avalonia.ReactiveUI;
-using linuxblox.viewmodels;
+using LinuxBlox.ViewModels;
 using ReactiveUI;
 
 namespace linuxblox;

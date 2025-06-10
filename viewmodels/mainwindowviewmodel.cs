@@ -15,7 +15,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Globalization;
 
-namespace linuxblox.viewmodels
+namespace LinuxBlox.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {

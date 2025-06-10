@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <AvaloniaXaml Include="views/**/*.axaml" />
-    <Compile Include="views/**/*.axaml.cs" DependentUpon="%(RecursiveDir)%(Filename).axaml" />
   </ItemGroup>
 
 </Project>

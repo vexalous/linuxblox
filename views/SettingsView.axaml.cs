@@ -1,8 +1,10 @@
 using Avalonia.Controls;
+using Avalonia.ReactiveUI;
+using LinuxBlox.ViewModels;
 
 namespace LinuxBlox.Views
 {
-    public partial class SettingsView : UserControl
+    public partial class SettingsView : ReactiveUserControl<MainWindowViewModel>
     {
         public SettingsView()
         {

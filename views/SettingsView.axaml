@@ -2,9 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:linuxblox.viewmodels"
+             xmlns:vm="using:LinuxBlox.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="LinuxBlox.Views.SettingsView">
+             x:Class="LinuxBlox.Views.SettingsView"
+             x:DataType="vm:MainWindowViewModel">
   <Design.DataContext>
     <vm:MainWindowViewModel/>
   </Design.DataContext>
@@ -21,7 +22,7 @@
         <DataTemplate DataType="{x:Type vm:InputFlagViewModel}">
           <Grid ColumnDefinitions="*,Auto" Margin="0,5">
             <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" Margin="10,0"/>
-            <TextBox Grid.Column="1" Text="{Binding Value}" MinWidth="100" IsEnabled="{Binding IsEnabled}"/>
+            <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" MinWidth="100" IsEnabled="{Binding IsEnabled}"/>
           </Grid>
         </DataTemplate>
 
