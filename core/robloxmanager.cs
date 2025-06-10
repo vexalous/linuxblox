@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -8,6 +9,8 @@ namespace linuxblox.core
 {
     public static class RobloxManager
     {
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+
         public static (string? Path, string Log) GetClientSettingsPath(string? basePath)
         {
             var log = new StringBuilder();
@@ -25,33 +28,43 @@ namespace linuxblox.core
                 var pathExe = Path.Combine(homeDir, ".var/app/org.vinegarhq.Sober/data/sober/exe/ClientSettings");
                 var pathAppData = Path.Combine(homeDir, ".var/app/org.vinegarhq.Sober/data/sober/appData/ClientSettings");
 
-                log.AppendLine($"Checking primary discovered path: '{pathAppData}'");
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"Checking primary discovered path: '{pathAppData}'"));
                 if (Directory.Exists(pathAppData))
                 {
                     var finalPath = Path.Combine(pathAppData, "ClientAppSettings.json");
-                    log.AppendLine($"[SUCCESS] Found settings directory at AppData path: '{finalPath}'");
+                    log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[SUCCESS] Found settings directory at AppData path: '{finalPath}'"));
                     return (finalPath, log.ToString());
                 }
 
-                log.AppendLine($"Checking secondary discovered path: '{pathExe}'");
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"Checking secondary discovered path: '{pathExe}'"));
                 if (Directory.Exists(pathExe))
                 {
                     var finalPath = Path.Combine(pathExe, "ClientAppSettings.json");
-                    log.AppendLine($"[SUCCESS] Found settings directory at exe path: '{finalPath}'");
+                    log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[SUCCESS] Found settings directory at exe path: '{finalPath}'"));
                     return (finalPath, log.ToString());
                 }
 
                 log.AppendLine("[FAIL] Neither of the discovered ClientSettings directories exist. Cannot determine where to save settings.");
-                log.AppendLine($"Creating primary target directory: '{pathAppData}'");
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"Creating primary target directory: '{pathAppData}'"));
                 Directory.CreateDirectory(pathAppData);
                 var createdPath = Path.Combine(pathAppData, "ClientAppSettings.json");
-                log.AppendLine($"[SUCCESS] Created new settings directory. Final path is: '{createdPath}'");
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[SUCCESS] Created new settings directory. Final path is: '{createdPath}'"));
                 return (createdPath, log.ToString());
+            }
+            catch (IOException ex)
+            {
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[IO FAIL] An IO error occurred while trying to access/create settings directory: {ex.Message}"));
+                return (null, log.ToString());
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[AUTH FAIL] An authorization error occurred while trying to access/create settings directory: {ex.Message}"));
+                return (null, log.ToString());
             }
             catch (Exception ex)
             {
-                log.AppendLine($"[CRITICAL FAIL] An unexpected error occurred: {ex.Message}");
-                return (null, log.ToString());
+                log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[CRITICAL FAIL] An unexpected error occurred: {ex.Message}"));
+                throw; // Rethrowing unexpected exceptions
             }
         }
 
@@ -70,7 +83,7 @@ namespace linuxblox.core
         public static void WriteFlags(string path, Dictionary<string, string> flags)
         {
             if (string.IsNullOrEmpty(path)) return;
-            var jsonString = JsonSerializer.Serialize(flags, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(flags, _jsonSerializerOptions);
             File.WriteAllText(path, jsonString);
         }
     }

@@ -31,13 +31,13 @@ namespace linuxblox.viewmodels
 
     public class InputFlagViewModel : FlagViewModel
     {
-        private string _value = "";
-        public string Value
+        private string _enteredValue = "";
+        public string EnteredValue
         {
-            get => _value;
-            set => this.RaiseAndSetIfChanged(ref _value, value);
+            get => _enteredValue;
+            set => this.RaiseAndSetIfChanged(ref _enteredValue, value);
         }
 
-        public override string GetValue() => Value;
+        public override string GetValue() => EnteredValue;
     }
 }
