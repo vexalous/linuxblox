@@ -24,7 +24,7 @@
         <Button Name="HamburgerButton" Content="☰" Command="{Binding TogglePaneCommand}" Padding="10,5"/>
     </StackPanel>
 
-    <SplitView DisplayMode="CompactOverlay" PanePlacement="Left" IsPaneOpen="False" IsPaneOpen="{Binding IsPaneOpen}">
+    <SplitView DisplayMode="CompactOverlay" PanePlacement="Left" IsPaneOpen="{Binding IsPaneOpen}">
       <SplitView.Pane>
         <StackPanel Margin="10">
           <Button Content="Launch" Name="LaunchFlagsButton" Margin="0,0,0,5"
@@ -37,20 +37,15 @@
       </SplitView.Pane>
 
       <SplitView.Content>
-        <ContentControl>
-          <ContentControl.Styles>
-            <Style Selector="ContentControl">
-              <Setter Property="Content">
-                <views:LaunchAndFlagsView/>
-              </Setter>
-            </Style>
-            <!-- This Style is more specific due to the attribute selector, so it should take precedence. -->
-            <Style Selector="ContentControl[DataContext.CurrentView='Settings']">
-              <Setter Property="Content">
-                <views:SettingsView/>
-              </Setter>
-            </Style>
-          </ContentControl.Styles>
+        <ContentControl Content="{Binding CurrentView}">
+            <ContentControl.Resources>
+                <DataTemplate DataType="{x:Static vm:MainWindowViewModel+MainView.LaunchAndFlags}">
+                    <views:LaunchAndFlagsView />
+                </DataTemplate>
+                <DataTemplate DataType="{x:Static vm:MainWindowViewModel+MainView.Settings}">
+                    <views:SettingsView />
+                </DataTemplate>
+            </ContentControl.Resources>
         </ContentControl>
       </SplitView.Content>
     </SplitView>
