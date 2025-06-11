@@ -34,10 +34,12 @@
         <StackPanel Margin="10">
           <Button Content="Launch" Name="LaunchFlagsButton" Margin="0,0,0,5"
                   Command="{Binding SwitchViewCommand}"
-                  CommandParameter="{x:Static vm:MainWindowViewModel+MainView.LaunchAndFlags}"/>
+                  // *** FIX: The CommandParameter path is simplified. ***
+                  CommandParameter="{x:Static vm:MainView.LaunchAndFlags}"/>
           <Button Content="Settings" Name="SettingsButton"
                   Command="{Binding SwitchViewCommand}"
-                  CommandParameter="{x:Static vm:MainWindowViewModel+MainView.Settings}"/>
+                  // *** FIX: The CommandParameter path is simplified. ***
+                  CommandParameter="{x:Static vm:MainView.Settings}"/>
         </StackPanel>
       </SplitView.Pane>
 
