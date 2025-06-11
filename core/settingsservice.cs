@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static linuxblox.core.AppSettings;
 
-namespace linuxblox.core;
+namespace LinuxBlox.core;
 
 public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
 {
