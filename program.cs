@@ -1,7 +1,8 @@
 using Avalonia;
 using System;
+using LinuxBlox;
 
-namespace linuxblox;
+namespace LinuxBlox;
 
 sealed class Program
 {
