@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LinuxBlox.ViewModels"
+             x:Class="LinuxBlox.Views.LaunchAndFlagsView"
+             x:DataType="vm:MainWindowViewModel">
+  <StackPanel Spacing="15" Margin="10">
+    <Button Content="Launch Sober"
+            Command="{Binding PlayCommand}"
+            HorizontalAlignment="Left"
+            Padding="20,10"
+            Background="{DynamicResource SystemAccentColor}"/>
+  </StackPanel>
+</UserControl>

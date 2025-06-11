@@ -14,11 +14,19 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Globalization;
+using LinuxBlox.Views;
+using Avalonia.Controls;
 
-namespace linuxblox.viewmodels
+namespace LinuxBlox.ViewModels
 {
+    // *** FIX: The enum is moved outside the MainWindowViewModel class. ***
+    // This makes it a top-level type, which is easier for the XAML compiler to resolve.
+    public enum MainView { LaunchAndFlags, Settings }
+
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
+        // The enum declaration is no longer inside this class.
+
         public ViewModelActivator Activator { get; }
 
         private const string FFlagsKey = "fflags";
@@ -38,9 +46,35 @@ namespace linuxblox.viewmodels
         public ReactiveCommand<Unit, Unit> PlayCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveFlagsCommand { get; }
 
+        private Control _currentView;
+        public Control CurrentView
+        {
+            get => _currentView;
+            set => this.RaiseAndSetIfChanged(ref _currentView, value);
+        }
+
+        public ReactiveCommand<MainView, Control> SwitchViewCommand { get; }
+
+        private readonly Control _launchAndFlagsViewInstance;
+        private readonly Control _settingsViewInstance;
+
+        // Redundant initializer removed.
+        private bool _isPaneOpen;
+        public bool IsPaneOpen
+        {
+            get => _isPaneOpen;
+            set => this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
+        }
+
+        public ReactiveCommand<Unit, Unit> TogglePaneCommand { get; }
+
         public MainWindowViewModel()
         {
             Activator = new ViewModelActivator();
+
+            _launchAndFlagsViewInstance = new LaunchAndFlagsView();
+            _settingsViewInstance = new SettingsView();
+            _currentView = _launchAndFlagsViewInstance;
 
             var homeDir = Environment.GetEnvironmentVariable("HOME");
             if (!string.IsNullOrEmpty(homeDir))
@@ -66,6 +100,20 @@ namespace linuxblox.viewmodels
 
             _statusMessage = CreateStatusMessageObservable(InitializeCommand, SaveFlagsCommand, PlayCommand)
                              .ToProperty(this, vm => vm.StatusMessage, "Awaiting initialization...");
+
+            SwitchViewCommand = ReactiveCommand.Create<MainView, Control>(viewEnum =>
+            {
+                return viewEnum switch
+                {
+                    MainView.LaunchAndFlags => _launchAndFlagsViewInstance,
+                    MainView.Settings => _settingsViewInstance,
+                    _ => _launchAndFlagsViewInstance
+                };
+            });
+            SwitchViewCommand.Subscribe(viewInstance => CurrentView = viewInstance);
+
+            // Lambda wrapped in braces to fix type mismatch.
+            TogglePaneCommand = ReactiveCommand.Create(() => { IsPaneOpen = !IsPaneOpen; });
 
             this.WhenActivated(disposables =>
             {

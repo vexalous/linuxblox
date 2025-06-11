@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
 
-namespace linuxblox.core
+namespace LinuxBlox.Core
 {
     public class DelegateCommand : ICommand
     {
