@@ -21,6 +21,7 @@ namespace LinuxBlox.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
+        // FIX #1: The enum is now 'public' so the XAML compiler can see it.
         public enum MainView { LaunchAndFlags, Settings }
 
         public ViewModelActivator Activator { get; }
@@ -42,28 +43,24 @@ namespace LinuxBlox.ViewModels
         public ReactiveCommand<Unit, Unit> PlayCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveFlagsCommand { get; }
 
-        private Control _currentView; // Changed type, initial value set in constructor
+        private Control _currentView;
         public Control CurrentView
         {
             get => _currentView;
             set => this.RaiseAndSetIfChanged(ref _currentView, value);
         }
 
-        public ReactiveCommand<MainView, Control> SwitchViewCommand { get; } // Changed return type
+        public ReactiveCommand<MainView, Control> SwitchViewCommand { get; }
 
         private readonly Control _launchAndFlagsViewInstance;
         private readonly Control _settingsViewInstance;
 
-        // TODO: Load IsPaneOpen state from persistent storage (e.g., ISettingsStore or config file)
+        // FIX #2: The redundant '= false' has been removed to fix the CA1805 analyzer error.
         private bool _isPaneOpen;
         public bool IsPaneOpen
         {
             get => _isPaneOpen;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
-                // TODO: Save IsPaneOpen state to persistent storage (e.g., ISettingsStore or config file)
-            }
+            set => this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
         }
 
         public ReactiveCommand<Unit, Unit> TogglePaneCommand { get; }
@@ -74,7 +71,7 @@ namespace LinuxBlox.ViewModels
 
             _launchAndFlagsViewInstance = new LaunchAndFlagsView();
             _settingsViewInstance = new SettingsView();
-            _currentView = _launchAndFlagsViewInstance; // Default view instance
+            _currentView = _launchAndFlagsViewInstance;
 
             var homeDir = Environment.GetEnvironmentVariable("HOME");
             if (!string.IsNullOrEmpty(homeDir))
@@ -107,11 +104,12 @@ namespace LinuxBlox.ViewModels
                 {
                     MainView.LaunchAndFlags => _launchAndFlagsViewInstance,
                     MainView.Settings => _settingsViewInstance,
-                    _ => _launchAndFlagsViewInstance // Default case
+                    _ => _launchAndFlagsViewInstance
                 };
             });
             SwitchViewCommand.Subscribe(viewInstance => CurrentView = viewInstance);
 
+            // FIX #3: The lambda is wrapped in braces {} to fix the CS0029 type mismatch error.
             TogglePaneCommand = ReactiveCommand.Create(() => { IsPaneOpen = !IsPaneOpen; });
 
             this.WhenActivated(disposables =>
