@@ -2,7 +2,7 @@ using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 
-namespace linuxblox.core
+namespace LinuxBlox.core
 {
     public class BooleanInverter : IValueConverter
     {
