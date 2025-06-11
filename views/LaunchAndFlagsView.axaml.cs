@@ -1,6 +1,6 @@
 using Avalonia.ReactiveUI;
 using LinuxBlox.ViewModels;
-using Avalonia.Markup.Xaml; // Added
+using Avalonia.Markup.Xaml;
 
 namespace LinuxBlox.Views
 {
