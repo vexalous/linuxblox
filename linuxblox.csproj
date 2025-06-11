@@ -4,7 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationClassName>linuxblox.App</ApplicationClassName>
+    <!-- Ensure the ApplicationClassName also has the correct casing -->
+    <ApplicationClassName>LinuxBlox.App</ApplicationClassName> 
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,12 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.10" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Include="**/*.axaml">
+      <SubType>Designer</SubType>
+    </AvaloniaXaml>
   </ItemGroup>
 
 </Project>
