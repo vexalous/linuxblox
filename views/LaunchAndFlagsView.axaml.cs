@@ -1,5 +1,6 @@
 using Avalonia.ReactiveUI;
 using LinuxBlox.ViewModels;
+using Avalonia.Markup.Xaml; // Added
 
 namespace LinuxBlox.Views
 {
@@ -8,6 +9,11 @@ namespace LinuxBlox.Views
         public LaunchAndFlagsView()
         {
             InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
         }
     }
 }

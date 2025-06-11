@@ -1,0 +1,40 @@
+--- a/views/LaunchAndFlagsView.axaml.cs
++++ b/views/LaunchAndFlagsView.axaml.cs
+@@ -1,5 +1,6 @@
+ using Avalonia.ReactiveUI;
+ using LinuxBlox.ViewModels;
++using Avalonia.Markup.Xaml; // Added
+
+ namespace LinuxBlox.Views
+ {
+@@ -9,5 +10,10 @@
+         {
+             InitializeComponent();
+         }
++
++        private void InitializeComponent()
++        {
++            AvaloniaXamlLoader.Load(this);
++        }
+     }
+ }
+--- a/views/SettingsView.axaml.cs
++++ b/views/SettingsView.axaml.cs
+@@ -1,5 +1,6 @@
+ using Avalonia.ReactiveUI;
+ using LinuxBlox.ViewModels;
++using Avalonia.Markup.Xaml; // Added
+
+ namespace LinuxBlox.Views
+ {
+@@ -9,5 +10,10 @@
+         {
+             InitializeComponent();
+         }
++
++        private void InitializeComponent()
++        {
++            AvaloniaXamlLoader.Load(this);
++        }
+     }
+ }
