@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
-namespace LinuxBlox.core
+namespace LinuxBlox.Core
 {
     public static class RobloxManager
     {
@@ -64,7 +64,7 @@ namespace LinuxBlox.core
             catch (Exception ex)
             {
                 log.AppendLine(string.Format(CultureInfo.InvariantCulture, $"[CRITICAL FAIL] An unexpected error occurred: {ex.Message}"));
-                throw; // Rethrowing unexpected exceptions
+                throw;
             }
         }
 
