@@ -1,6 +1,6 @@
 using ReactiveUI;
 
-namespace linuxblox.viewmodels
+namespace LinuxBlox.ViewModels
 {
     public abstract class FlagViewModel : ReactiveObject
     {
