@@ -14,8 +14,4 @@
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.10" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AvaloniaXaml Include="views/**/*.axaml" />
-  </ItemGroup>
-
 </Project>
