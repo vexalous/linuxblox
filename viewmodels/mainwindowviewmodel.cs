@@ -14,8 +14,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Globalization;
-using LinuxBlox.Views; // Added
-using Avalonia.Controls; // Added
+using LinuxBlox.Views;
+using Avalonia.Controls;
 
 namespace LinuxBlox.ViewModels
 {
@@ -55,8 +55,7 @@ namespace LinuxBlox.ViewModels
         private readonly Control _settingsViewInstance;
 
         // TODO: Load IsPaneOpen state from persistent storage (e.g., ISettingsStore or config file)
-        // For now, defaulting to false.
-        private bool _isPaneOpen = false;
+        private bool _isPaneOpen;
         public bool IsPaneOpen
         {
             get => _isPaneOpen;
