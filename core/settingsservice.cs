@@ -1,11 +1,13 @@
+// FILE: core/settingsservice.cs
+
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using static linuxblox.core.AppSettings;
+using static LinuxBlox.Core.AppSettings;
 
-namespace LinuxBlox.core;
+namespace LinuxBlox.Core;
 
 public record AppSettings(bool IsRobloxInstalled, string? RobloxBasePath)
 {
@@ -27,11 +29,11 @@ public static class SettingsService
     {
         string? configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
         if (!string.IsNullOrEmpty(configHome))
-            return Path.Combine(configHome, "linuxblox");
+            return Path.Combine(configHome, "linuxblox"); // Note: This could be a future analyzer warning, but won't break the build.
 
         string? home = Environment.GetEnvironmentVariable("HOME");
         if (!string.IsNullOrEmpty(home))
-            return Path.Combine(home, ".config", "linuxblox");
+            return Path.Combine(home, ".config", "linuxblox"); // Same as above.
         
         throw new NotSupportedException("Could not determine configuration directory. Set XDG_CONFIG_HOME or HOME.");
     }
