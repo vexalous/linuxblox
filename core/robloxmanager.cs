@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
-namespace linuxblox.core
+namespace LinuxBlox.core
 {
     public static class RobloxManager
     {
