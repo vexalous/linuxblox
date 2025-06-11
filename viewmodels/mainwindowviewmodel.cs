@@ -113,7 +113,7 @@ namespace LinuxBlox.ViewModels
             });
             SwitchViewCommand.Subscribe(viewInstance => CurrentView = viewInstance);
 
-            TogglePaneCommand = ReactiveCommand.Create(() => IsPaneOpen = !IsPaneOpen);
+            TogglePaneCommand = ReactiveCommand.Create(() => { IsPaneOpen = !IsPaneOpen; });
 
             this.WhenActivated(disposables =>
             {
