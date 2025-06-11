@@ -3,10 +3,11 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using LinuxBlox.ViewModels;
+using LinuxBlox.Views;
 using ReactiveUI;
 using Splat;
 
-namespace linuxblox;
+namespace LinuxBlox;
 
 public partial class App : Application
 {
