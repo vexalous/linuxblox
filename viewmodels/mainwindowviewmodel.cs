@@ -19,13 +19,10 @@ using Avalonia.Controls;
 
 namespace LinuxBlox.ViewModels
 {
-    // *** FIX: The enum is moved outside the MainWindowViewModel class. ***
-    // This makes it a top-level type, which is easier for the XAML compiler to resolve.
     public enum MainView { LaunchAndFlags, Settings }
 
     public class MainWindowViewModel : ReactiveObject, IActivatableViewModel
     {
-        // The enum declaration is no longer inside this class.
 
         public ViewModelActivator Activator { get; }
 
@@ -58,7 +55,6 @@ namespace LinuxBlox.ViewModels
         private readonly Control _launchAndFlagsViewInstance;
         private readonly Control _settingsViewInstance;
 
-        // Redundant initializer removed.
         private bool _isPaneOpen;
         public bool IsPaneOpen
         {
@@ -112,7 +108,6 @@ namespace LinuxBlox.ViewModels
             });
             SwitchViewCommand.Subscribe(viewInstance => CurrentView = viewInstance);
 
-            // Lambda wrapped in braces to fix type mismatch.
             TogglePaneCommand = ReactiveCommand.Create(() => { IsPaneOpen = !IsPaneOpen; });
 
             this.WhenActivated(disposables =>
