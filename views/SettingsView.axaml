@@ -1,23 +1,13 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:LinuxBlox.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="LinuxBlox.Views.SettingsView"
-             x:DataType="vm:MainWindowViewModel">
-  <Design.DataContext>
-    <vm:MainWindowViewModel/>
-  </Design.DataContext>
-  <StackPanel Spacing="15" Margin="10">
-    <TextBlock Text="FastFlag Editor"
-               FontWeight="Bold"
-               FontSize="16"/>
-
     <ListBox ItemsSource="{Binding Flags}"
-             VirtualizationMode="Simple"
              Background="Transparent"
              BorderThickness="0">
+      
+      <ListBox.ItemsPanel>
+        <ItemsPanelTemplate>
+          <VirtualizingStackPanel VirtualizationMode="Simple"/>
+        </ItemsPanelTemplate>
+      </ListBox.ItemsPanel>
+
       <ListBox.DataTemplates>
         <DataTemplate DataType="{x:Type vm:InputFlagViewModel}">
           <Grid ColumnDefinitions="*,Auto" Margin="0,5">
@@ -34,9 +24,3 @@
         </DataTemplate>
       </ListBox.DataTemplates>
     </ListBox>
-
-    <Button Content="Save Flags"
-            Command="{Binding SaveFlagsCommand}"
-            HorizontalAlignment="Right"/>
-  </StackPanel>
-</UserControl>
